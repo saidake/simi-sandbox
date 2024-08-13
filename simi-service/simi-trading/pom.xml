@@ -9,7 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>simi-trade</artifactId>
+    <artifactId>simi-trading</artifactId>
 
     <dependencies>
         <!--==================================================================================================== Custom Dependencies -->
@@ -69,7 +69,6 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>32.1.1-jre</version>
         </dependency>
         <!--======================================================================================================= Security -->
         <!--======================================================================================================= Log -->
