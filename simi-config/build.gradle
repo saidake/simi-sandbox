@@ -1,9 +1,10 @@
 plugins {
     id 'java-library'
+    id "maven-publish"
 }
 
-group = 'com.simi'
-version = '1.2.0' // Inherited from parent
+group = 'com.simi.labs'
+version = '1.0.0' // Inherited from parent
 
 java {
     toolchain {
@@ -16,8 +17,24 @@ repositories {
 }
 
 dependencies {
-    implementation platform(project(":simi-parent"))
-
+    implementation(platform("org.springframework.boot:spring-boot-dependencies:3.1.5"))
+    implementation 'org.springframework.boot:spring-boot-autoconfigure'
     // Spring Cloud dependency
-    api 'org.springframework.cloud:spring-cloud-starter-bootstrap'
+    // https://mvnrepository.com/artifact/org.springframework.cloud/spring-cloud-starter-bootstrap
+}
+
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            groupId = 'com.simi.labs'
+            artifactId = 'simi-config'
+            version = '1.0.1'
+        }
+    }
+
+    repositories {
+        mavenLocal()
+    }
 }
