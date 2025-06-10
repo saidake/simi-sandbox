@@ -2,6 +2,7 @@ package com.simi.labs.common.reqres.log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.annotation.Order;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferFactory;
 import org.springframework.core.io.buffer.DataBufferUtils;
@@ -33,6 +34,7 @@ import java.util.stream.Collectors;
  * @since 1.0.1
  */
 @Component
+@Order(-999)
 public class RequestResponseLoggingFilter implements WebFilter {
 
     private static final Logger logger = LoggerFactory.getLogger(RequestResponseLoggingFilter.class);
