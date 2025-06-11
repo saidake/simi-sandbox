@@ -1,46 +1,13 @@
-# Table of Contents
-- [Introduction](#introduction)
-- [Directory Structure](#directory-structure)
-  - [docs](#docs)
-    - [Env.md](#envmd)
-    - [ReleaseNotes.md](#releasenotesmd)
-  - [AAA](#aaa)
-  - [simi-common](#simi-common)
-    - [simi-common-utils](#simi-common-utils)
-  - [sandbox](#sandbox)
-    - [extension-test](#extension-test)
-      - [simi-cap](#simi-cap)
-  - [simi-app](#simi-app)
-    - [simi-initializer-app](#simi-initializer-app)
-    - [simi-sgz](#simi-sgz)
-  - [simi-config](#simi-config)
-  - [simi-custom](#simi-custom)
-  - [simi-gateway](#simi-gateway)
-
 # Introduction
 [Back to Top](#table-of-contents)
-**Simi Sandbox** is a modular Gradle project used to explore architecture and integration techniques.  
+
+**simi spring boot** is a modular Gradle project used to explore architecture and integration techniques.  
 It includes documentation and tools to help with configuration and usage.
 
 # Directory Structure
 [Back to Top](#table-of-contents)
-
-## docs
-
-### Env.md
-Describes the local runtime environment.  
-See [Env.md](docs/Env.md) for details.
-
-### ReleaseNotes.md
-Contains release notes.  
-See [ReleaseNotes.md](docs/ReleaseNotes.md) for details.
-
-## AAA
-Startup configuration files used by other modules.
-
 ## simi-spring-boot
 ### simi-common
-
 #### simi-common-utils
 
 - `StopWatchDebugger`  

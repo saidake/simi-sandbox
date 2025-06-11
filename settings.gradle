@@ -1,6 +1,6 @@
 rootProject.name = 'simi-sandbox'
 
-include ":simi-common:simi-common-utils"
-include ":simi-config"
-include ':simi-common:simi-common-req-res-log'
+//include ":simi-config"
+include ":simi-spring-boot:simi-common:simi-common-utils"
+include ':simi-spring-boot:simi-common:simi-common-req-res-log'
 

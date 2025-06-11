@@ -8,7 +8,7 @@ schema*.sql
 default-env.json
 
 **/bin/
-**/target/
+srv/target/
 .flattened-pom.xml
 .classpath
 .project
