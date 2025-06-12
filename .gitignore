@@ -8,7 +8,7 @@ node_modules/
 .gradle/
 build/
 classes/
-/gradle/wrapper/
+/simi-spring-boot/gradle/wrapper/
 
 *.iml
 package-lock.json
