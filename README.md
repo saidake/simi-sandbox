@@ -1,87 +1,28 @@
 # Table of Contents
+- [Table of Contents](#table-of-contents)
 - [Introduction](#introduction)
-- [Directory Structure](#directory-structure)
-  - [docs](#docs)
-    - [Env.md](#envmd)
-    - [ReleaseNotes.md](#releasenotesmd)
-  - [AAA](#aaa)
-  - [simi-common](#simi-common)
-    - [simi-common-utils](#simi-common-utils)
-  - [sandbox](#sandbox)
-    - [extension-test](#extension-test)
-      - [simi-cap](#simi-cap)
-  - [simi-app](#simi-app)
-    - [simi-initializer-app](#simi-initializer-app)
-    - [simi-sgz](#simi-sgz)
-  - [simi-config](#simi-config)
-  - [simi-custom](#simi-custom)
-  - [simi-gateway](#simi-gateway)
-
+- [Functionalities](#functionalities)
+  - [scripts/cpfiles.sh](#scriptscpfilessh)
+  - [scripts/exec.sh](#scriptsexecsh)
 # Introduction
-[Back to Top](#table-of-contents)
-**Simi Sandbox** is a modular Gradle project used to explore architecture and integration techniques.  
-It includes documentation and tools to help with configuration and usage.
+**Simi Sandbox** is a project to help transfer files, execute commands, and install databases or dependencies on remote servers.
+# Functionalities
+## scripts/cpfiles.sh
+This script automates uploading specific files or directories from `scripts/assets`
+to a remote server.
+* Only files or folders listed in `scripts/config/path-mapping.properties` will be transferred.
+* Server credentials are defined in `scripts/config/server.sh`, and each entry is mapped
+to a target directory on the remote server.
+* Each overwrite operation prompts a confirmation warning to ensure safety, unless `SILENT=true` is set.
+* The script uses SCP or rsync for secure transfer and can optionally overwrite
+existing files/directories on the remote side.
 
-# Directory Structure
-[Back to Top](#table-of-contents)
+![](./docs/assets/scripts/cpfiles.svg)
 
-## docs
+## scripts/exec.sh
+This script executes a local bash file on the remote server without copying it.
+* The first parameter of this Bash script is a local Bash file, which will be
+executed directly on the remote server. The working path defaults to the user home.
 
-### Env.md
-Describes the local runtime environment.  
-See [Env.md](docs/Env.md) for details.
+![](./docs/assets/scripts/exec.svg)
 
-### ReleaseNotes.md
-Contains release notes.  
-See [ReleaseNotes.md](docs/ReleaseNotes.md) for details.
-
-## AAA
-Startup configuration files used by other modules.
-
-## simi-spring-boot
-### simi-common
-
-#### simi-common-utils
-
-- `StopWatchDebugger`  
-  Utility for measuring sync and async execution times without modifying original code.  
-  Run its `main` method to see output.  
-  Works in multi-threaded environments using a singleton `stopwatch`.
-
-  ![](docs/assets/main/swt1.png)
-
-  Usage: Copy the class into your project and debug using breakpoints in **IDEA**.  
-  ![](docs/assets/main/swt2.png)
-
-- `IpUtilsServlet`  
-  Gets client IPs in servlet-based web apps.
-
-- `IpUtilsWebFlux`  
-  Gets client IPs in WebFlux-based apps.
-
-## simi-spring-boot-sandbox
-A Maven module for testing, experimenting, and showcasing code.
-
-#### extension-test
-
-##### simi-cap
-CAP demo app.  
-Based on the [SAP Cloud Application Programming Model (CAP)](https://cap.cloud.sap/docs/java/getting-started).
-
-### simi-app
-
-#### simi-initializer-app
-An IntelliJ IDEA plugin that simplifies Maven project setup.  
-It handles certificate paths, local dependencies, and server IPs.
-
-#### simi-sgz
-Automation scripts for the game [Three Kingdoms Tactics](https://sangokushi.qookkagames.jp).
-
-### simi-config
-Shared configuration files.
-
-### simi-custom
-Custom modules.
-
-### simi-gateway
-Gateway-related modules.

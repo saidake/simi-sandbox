@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# ================================================================== Required Configurations
+export REMOTE_HOST='192.168.127.131'
+export REMOTE_SSH_PORT='22'
+export REMOTE_USER='test99'
+export REMOTE_PWD='testpwd'
+
+#export TEST_AMAZON_USER='root'
+#export TEST_AMAZON_IP='192.168.127.128'
+#export ROOT='C:\Users\simi\Desktop\DevProjects\simi\scripts'
+#export AWS_ACCESS_KEY_ID=test
+#export AWS_SECRET_ACCESS_KEY=test
+
+#export TEST_AMAZON_DOCKER_COMPOSE_CONFIG_PATH="~/docker/docker-compose.yml"
