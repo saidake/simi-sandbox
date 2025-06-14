@@ -11,7 +11,7 @@
 #   ./exec.sh <local-bash-file-path>
 #
 # Example:
-#   ./exec.sh ./assets/example-bash.sh
+#   ./execr.sh ./AAA/assets/example-bash.sh
 #
 # Author: Craig Brown
 # Since: 1.1.0
@@ -20,7 +20,7 @@
 
 # ================================================================== Required Configurations
 # Import global environment variables
-source ./config/server.sh
+source ./AAA/config/server.sh
 # Example:
 # REMOTE_HOST='192.168.127.131'
 # REMOTE_SSH_PORT='22'

@@ -1,10 +1,10 @@
 #!/bin/bash
 # ************************************************************************************
-# This script automates uploading specific files or directories from `scripts/assets`
+# This script automates uploading specific files or directories from `scripts/AAA/assets`
 # to a remote server.
 #
-# Only files or folders listed in `scripts/config/path-mapping.properties` will be transferred.
-# Server credentials are defined in `scripts/config/server.sh`, and each entry is mapped
+# Only files or folders listed in `scripts/AAA/config/path-mapping.properties` will be transferred.
+# Server credentials are defined in `scripts/AAA/config/server.sh`, and each entry is mapped
 # to a target directory on the remote server.
 #
 # Each overwrite operation prompts a confirmation warning to ensure safety, unless `SILENT=true` is set.
@@ -13,9 +13,9 @@
 # existing files/directories on the remote side.
 #
 # Prerequisites:
-#   1. Put your files or folders in the `scripts/assets` folder.
-#   2. Define path mappings in `scripts/config/path-mapping.properties`.
-#   3. Configure variables in `scripts/config/server.sh`:
+#   1. Put your files or folders in the `scripts/AAA/assets` folder.
+#   2. Define path mappings in `scripts/AAA/config/path-mapping.properties`.
+#   3. Configure variables in `scripts/AAA/config/server.sh`:
 #        - REMOTE_HOST
 #        - REMOTE_USER
 #        - REMOTE_SSH_PORT (default: 22)
@@ -39,7 +39,7 @@
 
 # ================================================================== Required Configurations
 # Import global environment variables
-source ./config/server.sh
+source ./AAA/config/server.sh
 # Customize the values if needed
 # REMOTE_HOST='192.168.127.131'
 # REMOTE_SSH_PORT='22'
@@ -50,13 +50,13 @@ source ./config/server.sh
 # Overwrite the old file or folder.
 IS_OVERWRITE=true
 # Use 'rsync' instead of 'scp'
-USE_RSYNC=true
+USE_RSYNC=false
 # Ask warning messages
 SILENT=false
 # Load file-to-directory mappings from properties file
-properties_file="./config/path-mapping.properties"
+properties_file="./AAA/config/path-mapping.properties"
 # Assets
-assets_directory="./assets"
+assets_directory="./AAA/assets"
 
 # ================================================================== Load Mapping File
 declare -A file_mappings
