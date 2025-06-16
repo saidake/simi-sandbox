@@ -91,7 +91,7 @@ resolve_remote_path() {
 
 load_properties() {
     if [[ ! -f "$properties_file" ]]; then
-        echo "[ERROR] Mapping file not found: $properties_file"
+        echo "[ERROR] Mapping file not found '$properties_file'"
         exit 1
     fi
 
@@ -114,13 +114,9 @@ remote_file_exists() {
 prepare_remote_directory() {
   local remote_dir="$1"
   if remote_dir_exists "$remote_dir"; then
-    if [[ "$IS_OVERWRITE" == true ]]; then
-      echo "[INFO] Overwrite the existed old directory: $remote_dir"
-      ask "[WARNING] Are you sure to overwrite the remote directory $remote_dir ? (y/n): "
-      sshpass -p "$REMOTE_PWD" ssh -p "$REMOTE_SSH_PORT" "$REMOTE_USER@$REMOTE_HOST" "rm -rf \"$remote_dir\"/*"
-    fi
+    echo "[INFO] the remote directory '$remote_dir' already exists."
   else
-    echo "[INFO] Remote directory $remote_dir does not exist. Creating it."
+    echo "[INFO] Remote directory '$remote_dir' does not exist. Creating it."
     sshpass -p "$REMOTE_PWD" ssh -p "$REMOTE_SSH_PORT" "$REMOTE_USER@$REMOTE_HOST" "mkdir -p \"$remote_dir\""
   fi
 }
@@ -128,8 +124,8 @@ prepare_remote_directory() {
 remove_remote_file_if_exists() {
   local remote_file="$1"
   if remote_file_exists "$remote_file"; then
-    echo "[INFO] Overwrite the existed old file: $remote_file"
-    ask "[WARNING] Are you sure to overwrite the remote file $remote_file ? (y/n): "
+    echo "[INFO] Overwrite the existed old file '$remote_file'"
+    ask "[WARNING] Are you sure to overwrite the remote file '$remote_file' ? (y/n): "
     sshpass -p "$REMOTE_PWD" ssh -p "$REMOTE_SSH_PORT" "$REMOTE_USER@$REMOTE_HOST" "rm -f \"$remote_file\""
   fi
 }
@@ -162,7 +158,7 @@ upload_item() {
 
   if [[ -d "$local_path" ]]; then
     prepare_remote_directory "$remote_dir"
-    echo "[INFO] Uploading directory '$local_path' to '$remote_dir'"
+    echo "[INFO] Uploading all content under directory '$local_path' to '$remote_dir'"
     do_upload "$local_path" "$remote_dir" true
   elif [[ -f "$local_path" ]]; then
     file_name=$(basename "$local_path")
