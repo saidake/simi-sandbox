@@ -26,10 +26,10 @@
 #        - REMOTE_PWD
 #
 # Usage:
-#   * ./exec.sh <local-bash-file-path>
+#   * ./scripts/exec.sh <local-bash-file-path>
 #
-# Example:
-#   * ./execr.sh ./AAA/assets/example-bash.sh
+# Example (with default options defined in this script):
+#   * ./scripts/execr.sh ./scripts/AAA/assets/example-bash.sh
 #
 # Global Env:
 #   * ROOT : The absolute path of scripts directory.

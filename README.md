@@ -32,7 +32,10 @@
         - REMOTE_PWD
 
  Usage:
-   ./cpfiles.sh
+   * ./scripts/cpfiles.sh
+
+ Example (with default options defined in this script):
+   * ./scripts/cpfiles.sh
 
  Script Options (variables inside this script):
    * IS_OVERWRITE : (true/false) Whether to overwrite existing remote files/directories.
@@ -44,7 +47,6 @@
 
  Global Env:
    * ROOT : The absolute path of scripts directory.
-
 
 ## [scripts/execr.sh](./scripts/execr.sh)
 ![](./docs/assets/scripts/execr.svg)  
@@ -61,10 +63,10 @@
         - REMOTE_PWD
 
  Usage:
-   * ./exec.sh <local-bash-file-path>
+   * ./scripts/exec.sh <local-bash-file-path>
 
- Example:
-   * ./execr.sh ./AAA/assets/example-bash.sh
+ Example (with default options defined in this script):
+   * ./scripts/execr.sh ./scripts/AAA/assets/example-bash.sh
 
  Global Env:
    * ROOT : The absolute path of scripts directory.
@@ -99,8 +101,12 @@
         - REMOTE_PWD
 
  Usage:
-   * ./patchr.sh            # Patch remote file
-   * ./patchr.sh recover    # Recover from backup
+   * ./scripts/patchr.sh            # Patch remote file
+   * ./scripts/patchr.sh recover    # Recover from backup
+
+ Example (with default options defined in this script):
+   * ./scripts/patchr.sh            # Patch remote file
+   * ./scripts/patchr.sh recover    # Recover from backup
 
  Global Env:
    * ROOT : The absolute path of scripts directory.

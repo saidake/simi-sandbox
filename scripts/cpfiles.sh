@@ -35,7 +35,10 @@
 #        - REMOTE_PWD
 #
 # Usage:
-#   ./cpfiles.sh
+#   * ./scripts/cpfiles.sh
+#
+# Example (with default options defined in this script):
+#   * ./scripts/cpfiles.sh
 #
 # Script Options (variables inside this script):
 #   * IS_OVERWRITE : (true/false) Whether to overwrite existing remote files/directories.

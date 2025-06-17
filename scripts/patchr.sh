@@ -42,8 +42,12 @@
 #        - REMOTE_PWD
 #
 # Usage:
-#   * ./patchr.sh            # Patch remote file
-#   * ./patchr.sh recover    # Recover from backup
+#   * ./scripts/patchr.sh            # Patch remote file
+#   * ./scripts/patchr.sh recover    # Recover from backup
+#
+# Example (with default options defined in this script):
+#   * ./scripts/patchr.sh            # Patch remote file
+#   * ./scripts/patchr.sh recover    # Recover from backup
 #
 # Global Env:
 #   * ROOT : The absolute path of scripts directory.
