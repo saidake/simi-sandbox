@@ -1,4 +1,17 @@
 #!/bin/bash
+# Copyright 2012-2024 the original author or authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 # ************************************************************************************
 # This script automates uploading specific files or directories from `scripts/AAA/assets`
 # to a remote server.
@@ -25,21 +38,26 @@
 #   ./cpfiles.sh
 #
 # Script Options (variables inside this script):
-#   IS_OVERWRITE : (true/false) Whether to overwrite existing remote files/directories.
+#   * IS_OVERWRITE : (true/false) Whether to overwrite existing remote files/directories.
 #                  When true, script prompts before deleting remote files/dirs unless SILENT=true.
 #
-#   USE_RSYNC    : (true/false) Use 'rsync' for uploading instead of 'scp'.
+#   * USE_RSYNC    : (true/false) Use 'rsync' for uploading instead of 'scp'.
 #
-#   SILENT       : (true/false) If true, disables all confirmation prompts (auto-approve).
+#   * SILENT       : (true/false) If true, disables all confirmation prompts (auto-approve).
+#
+# Global Env:
+#   * ROOT : The absolute path of scripts directory.
 #
 # Author: Craig Brown
 # Since: 1.1.0
 # Date: July 8, 2025
 # ************************************************************************************
+# shellcheck disable=SC2034
+source "$(dirname "${BASH_SOURCE[0]}")/AAA/config/global.sh"
 
 # ================================================================== Required Configurations
 # Import global environment variables
-source ./AAA/config/server.sh
+source "$ROOT/AAA/config/server.sh"
 # Customize the values if needed
 # REMOTE_HOST='192.168.127.131'
 # REMOTE_SSH_PORT='22'
@@ -54,40 +72,14 @@ USE_RSYNC=false
 # Ask warning messages
 SILENT=false
 # Load file-to-directory mappings from properties file
-properties_file="./AAA/config/path-mapping.properties"
+properties_file="$ROOT/AAA/config/path-mapping.properties"
 # Assets
-assets_directory="./AAA/assets"
+assets_directory="$ROOT/AAA/assets"
 
-# ================================================================== Load Mapping File
+# ================================================================== Functions
+source "$ROOT/AAA/common/functions.sh"
+source "$ROOT/AAA/common/upload.sh"
 declare -A file_mappings
-
-trust_host() {
-  echo "[INFO] Trusting $REMOTE_HOST:$REMOTE_SSH_PORT"
-  ssh-keygen -R "$REMOTE_HOST" > /dev/null 2>&1
-  ssh-keyscan -p "$REMOTE_SSH_PORT" "$REMOTE_HOST" >> ~/.ssh/known_hosts 2>/dev/null
-}
-# Choice function to interact with the user
-ask() {
-  if [[ "$SILENT" == true ]]; then
-    return 0
-  fi
-  local prompt="${1:-Are you sure? (y/n): }"
-  while true; do
-    read -p "$prompt" user_choice
-    case "$user_choice" in
-      [Yy]) return 0 ;;
-      [Nn]) echo "Aborted by user."; exit 1 ;;
-      *) echo "Please enter y or n." ;;
-    esac
-  done
-}
-
-resolve_remote_path() {
-  local raw_path="$1"
-  local resolved_path
-  resolved_path=$(sshpass -p "$REMOTE_PWD" ssh -p "$REMOTE_SSH_PORT" "$REMOTE_USER@$REMOTE_HOST" "echo $raw_path")
-  echo "$resolved_path"
-}
 
 load_properties() {
     if [[ ! -f "$properties_file" ]]; then
@@ -103,79 +95,6 @@ load_properties() {
     done < "$properties_file"
 }
 
-remote_dir_exists() {
-  sshpass -p "$REMOTE_PWD" ssh -p "$REMOTE_SSH_PORT" "$REMOTE_USER@$REMOTE_HOST" "[ -d \"$1\" ]"
-}
-
-remote_file_exists() {
-  sshpass -p "$REMOTE_PWD" ssh -p "$REMOTE_SSH_PORT" "$REMOTE_USER@$REMOTE_HOST" "[ -f \"$1\" ]"
-}
-
-prepare_remote_directory() {
-  local remote_dir="$1"
-  if remote_dir_exists "$remote_dir"; then
-    echo "[INFO] the remote directory '$remote_dir' already exists."
-  else
-    echo "[INFO] Remote directory '$remote_dir' does not exist. Creating it."
-    sshpass -p "$REMOTE_PWD" ssh -p "$REMOTE_SSH_PORT" "$REMOTE_USER@$REMOTE_HOST" "mkdir -p \"$remote_dir\""
-  fi
-}
-
-remove_remote_file_if_exists() {
-  local remote_file="$1"
-  if remote_file_exists "$remote_file"; then
-    echo "[INFO] Overwrite the existed old file '$remote_file'"
-    ask "[WARNING] Are you sure to overwrite the remote file '$remote_file' ? (y/n): "
-    sshpass -p "$REMOTE_PWD" ssh -p "$REMOTE_SSH_PORT" "$REMOTE_USER@$REMOTE_HOST" "rm -f \"$remote_file\""
-  fi
-}
-
-do_upload() {
-  local source="$1"
-  local dest="$2"
-  local is_dir="$3"  # true or false
-
-  if [[ "$USE_RSYNC" == true ]]; then
-    if [[ "$is_dir" == true ]]; then
-      sshpass -p "$REMOTE_PWD" rsync -avz -e "ssh -p $REMOTE_SSH_PORT" "$source/" "$REMOTE_USER@$REMOTE_HOST:$dest"
-    else
-      sshpass -p "$REMOTE_PWD" rsync -avz -e "ssh -p $REMOTE_SSH_PORT" "$source" "$REMOTE_USER@$REMOTE_HOST:$dest"
-    fi
-  else
-    if [[ "$is_dir" == true ]]; then
-      sshpass -p "$REMOTE_PWD" scp -r -P "$REMOTE_SSH_PORT" "$source/"* "$REMOTE_USER@$REMOTE_HOST:$dest"
-    else
-      sshpass -p "$REMOTE_PWD" scp -P "$REMOTE_SSH_PORT" "$source" "$REMOTE_USER@$REMOTE_HOST:$dest"
-    fi
-  fi
-}
-
-upload_item() {
-  local local_path="$1"
-  local remote_raw_path="$2"
-  remote_dir=$(resolve_remote_path "$remote_raw_path")
-  trust_host
-
-  if [[ -d "$local_path" ]]; then
-    prepare_remote_directory "$remote_dir"
-    echo "[INFO] Uploading all content under directory '$local_path' to '$remote_dir'"
-    do_upload "$local_path" "$remote_dir" true
-  elif [[ -f "$local_path" ]]; then
-    file_name=$(basename "$local_path")
-    remote_file="$remote_dir/$file_name"
-
-    if [[ "$IS_OVERWRITE" == true ]]; then
-      remove_remote_file_if_exists "$remote_file"
-    fi
-
-    echo "[INFO] Uploading file '$local_path' to '$remote_dir'"
-    do_upload "$local_path" "$remote_dir" false
-  else
-    echo "[WARN] Skipping unrecognized path: $local_path"
-  fi
-}
-
-
 upload_files() {
   echo "[INFO] Starting upload process..."
   for item in "${!file_mappings[@]}"; do
@@ -184,7 +103,7 @@ upload_files() {
     # echo "folder or file: $local_path"
 
     if [[ -e "$local_path" ]]; then
-      upload_item "$local_path" "$remote_dir"
+      upload_file_or_dir_to_dir "$local_path" "$remote_dir"
     else
       echo "[WARN] '$item' not found in assets. Skipping."
     fi
@@ -192,6 +111,7 @@ upload_files() {
   echo "[INFO] Upload complete."
 }
 
-# ================================================================== Run
+# ================================================================== Logic
+trust_host
 load_properties
 upload_files
