@@ -1,38 +1,74 @@
 #!/bin/bash
+# Copyright 2012-2024 the original author or authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 # ************************************************************************************
-# This script execute bash file on the remote sever. The first parameter of this Bash
-# script is a local Bash file, which will be executed on the remote server.
-# The work path is the user path by default.
+# This script executes a local bash file on the remote server without copying it.
+# The first parameter of this Bash script is a local Bash file, which will be
+# executed directly on the remote server. The working path defaults to the user home.
 #
 # Prerequisites:
-#   Modify the required configurations in the bash file with your own values.
+#   1. Create your custom bash file for remote execution (e.g. ./AAA/assets/example-bash.sh).
+#   2. Configure variables in `scripts/AAA/config/server.sh`:
+#        - REMOTE_HOST
+#        - REMOTE_USER
+#        - REMOTE_SSH_PORT (default: 22)
+#        - REMOTE_PWD
+#
 # Usage:
-#   ./execr.sh <remote-bash-file-path>
+#   * ./scripts/exec.sh <local-bash-file-path>
+#
+# Example (with default options defined in this script):
+#   * ./scripts/execr.sh ./scripts/AAA/assets/example-bash.sh
+#
+# Global Env:
+#   * ROOT : The absolute path of scripts directory.
 #
 # Author: Craig Brown
-# Since: Oct 4, 2024
+# Since: 1.1.0
+# Date: Oct 4, 2024
 # ************************************************************************************
+source "$(dirname "${BASH_SOURCE[0]}")/AAA/config/global.sh"
 
 # ================================================================== Required Configurations
-# Import global environment variables (Optional)
-source ./config/servers.sh
+# Import global environment variables
+source "$ROOT/AAA/config/server.sh"
+# Example:
+# REMOTE_HOST='192.168.127.131'
+# REMOTE_SSH_PORT='22'
+# REMOTE_USER='test99'
+# REMOTE_PWD='testpwd'
 
-# Common variables
-# ssh-copy-id root@192.168.127.128   Copy public key to the remote server
-exe_bash_path=$1
-remote_work_path='~'
-REMOTE_USER=$TEST_AMAZON_USER
-REMOTE_HOST=$TEST_AMAZON_IP
+# ================================================================== Default Configurations
+REMOTE_WORK_PATH='~'  # Remote working directory
+LOCAL_BASH_PATH="$1"     # Local bash file to execute
 
-# ================================================================== Functions
-# Check if the parameter is passed
-if [ -z "$exe_bash_path" ]; then
-    echo "Error: No bash script file provided. Please pass the script file path as an argument."
-    exit 1
+# ================================================================== Validate Input
+source "$ROOT/AAA/common/functions.sh"
+trust_host
+
+if [[ -z "$LOCAL_BASH_PATH" ]]; then
+  echo "[ERROR] No bash script file provided. Please pass the script file path as an argument."
+  exit 1
 fi
 
-# Execute bash file remotely
-# shellcheck disable=SC2029
-ssh "$REMOTE_USER"@"$REMOTE_HOST" "cd $remote_work_path && bash -l -c 'bash -s'" < "$exe_bash_path"
+if [[ ! -f "$LOCAL_BASH_PATH" ]]; then
+  echo "[ERROR] File does not exist: $LOCAL_BASH_PATH"
+  exit 1
+fi
 
+# ================================================================== Execute Remotely
+echo "[INFO] Executing '$LOCAL_BASH_PATH' on remote host $REMOTE_USER@$REMOTE_HOST..."
 
+# Use sshpass to pass the password
+remote_execute "cd $REMOTE_WORK_PATH && bash -l -c 'bash -s'" < "$LOCAL_BASH_PATH"

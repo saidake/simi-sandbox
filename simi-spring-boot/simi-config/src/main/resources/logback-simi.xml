@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- scan: If the configuration file changes, it will be reloaded. The default value is true -->
+<!-- scanPeriod: The time interval to monitor changes in the configuration file, default unit is milliseconds (this property is effective when scan is true, with a default interval of 1 minute) -->
+<!-- debug: When this property is set to true, internal logback logs will be printed. The default value is false. -->
+<configuration scan="true" scanPeriod="10 seconds">
+
+    <!-- Values defined in application.properties will be inserted into the logger context, variables can also be used -->
+    <springProperty name="LOG_PATH" scope="context" source="simi.log-path" defaultValue="${user.dir}/AAAlogs"/>
+
+    <springProperty name="APP_NAME" scope="context" source="spring.application.name"/>
+    <springProperty name="SERVER_IP" scope="context" source="spring.cloud.client.ip-address" defaultValue="0.0.0.0"/>
+    <springProperty name="SERVER_PORT" scope="context" source="server.port" defaultValue="0000"/>
+
+    <!-- Custom colored log format configuration, custom attributes allow the use of variables with "${}", colors like faint, blue, yellow, magenta, orange, cyan -->
+    <property name="CONSOLE_LOG_PATTERN"
+              value="%clr(%date{yyyy-MM-dd HH:mm:ss.SSS}){blue} - %clr(-){faint}%clr(%5level) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%thread]){yellow} %clr(%logger){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"/>
+
+    <!-- Custom file log format configuration -->
+    <property name="FILE_LOG_PATTERN"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} - ${APP_NAME} - %-5level --- [%thread] %logger{50} - %msg%n "/>
+
+
+    <contextName>logback</contextName>
+    <conversionRule conversionWord="clr" converterClass="org.springframework.boot.logging.logback.ColorConverter" />               <!-- Log format and color rendering, the class responsible for rendering colored logs -->
+    <conversionRule conversionWord="wex" converterClass="org.springframework.boot.logging.logback.WhitespaceThrowableProxyConverter" />
+    <conversionRule conversionWord="wEx" converterClass="org.springframework.boot.logging.logback.ExtendedWhitespaceThrowableProxyConverter" />
+
+    <!-- %date: Time format -->
+    <!-- %level: Log level -->
+    <!-- %thread: The thread name where the log was generated -->
+    <!-- %logger: Package name, shortened or abbreviated -->
+    <!-- %msg: The message provided by the application -->
+    <!-- %n: Platform's newline character \n or \r\n -->
+    <!-- -%20.30logger: For logger names shorter than 20 characters, pad with spaces on the left; truncate longer names at 30 characters -->
+    <!-- %logger{26}: Abbreviates package names longer than 26 characters -->
+
+    <!-- ${testKey:-%t }: Outputs the value of testKey, defaulting to -%t -->
+
+    <!-- gray: Gray, white: White, yellow: Yellow, green: Green, red: Red, black: Black, magenta: Magenta, boldMagenta: Bold magenta, cyan: Cyan -->
+
+    <!-- Outputs to the console, this appender is for development use with the lowest log level configuration, console logs will show logs greater than or equal to this level -->
+    <appender name="CONSOLE_LOG" class="ch.qos.logback.core.ConsoleAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>debug</level>
+        </filter>
+        <encoder>
+            <Pattern>${CONSOLE_LOG_PATTERN}</Pattern>
+            <!-- Set the character encoding -->
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- Outputs to a file, generates a new file daily with DEBUG level logs -->
+    <!-- <file>${LOG_PATH}/sdk-${APP_NAME}.log</file>  -->
+    <!-- Log output path, when configuring rolling logs, current logs are output to this file, and logs after tomorrow will be output to the rolling log pattern file -->
+    <appender name="FILE_LOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <encoder>
+            <!-- Log file output format -->
+            <pattern>${FILE_LOG_PATTERN}</pattern>
+            <!-- Set the character encoding -->
+            <charset>UTF-8</charset>
+        </encoder>
+        <!-- Rolling policy based on time and size -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <!-- Logs roll daily -->
+            <!--  clp.%i.log.zip: If the suffix ends with ".zip" or ".gz", log compression is enabled -->
+            <!--  %d determines the time dimension for rotation, e.g., %d{yyyy/MM} rotates at the beginning of each month, by default %d is yyyy-MM-dd for daily rotation -->
+            <!-- %i is the sequence number for the file after rolling based on maxFileSize -->
+            <fileNamePattern>${LOG_PATH}/simi-log-${APP_NAME}-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <!-- The maximum size of a single log file, the log file will be truncated (and compressed) when this size is reached -->
+            <maxFileSize>100MB</maxFileSize>
+
+            <!-- Maximum retention time for log files, for example, when %d in fileNamePattern ends with dd, retain logs for 60 days -->
+            <maxHistory>60</maxHistory>
+
+        </rollingPolicy>
+        <!--<filter class="ch.qos.logback.classic.filter.LevelFilter"> -->
+        <!-- This log file only records DEBUG level logs -->
+        <!--<level>DEBUG</level>-->
+        <!--<onMatch>ACCEPT</onMatch>-->
+        <!--<onMismatch>DENY</onMismatch>-->
+        <!--</filter>-->
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <!-- Filters out logs lower than INFO level, records logs equal to or higher than INFO -->
+            <level>INFO</level>
+        </filter>
+        <!-- Log levels from low to high: TRACE < DEBUG < INFO < WARN < ERROR < FATAL, if set to WARN, logs lower than WARN will not be output -->
+    </appender>
+
+    <root level="info">
+        <appender-ref ref="CONSOLE_LOG" />
+        <appender-ref ref="FILE_LOG" />
+    </root>
+</configuration>

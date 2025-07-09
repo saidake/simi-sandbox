@@ -1,0 +1,142 @@
+#!/bin/bash
+# Copyright 2012-2024 the original author or authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ************************************************************************************
+# This script safely patches a remote file on a server using one of two modes:
+#   1. Upload a local file and replace a target remote file.
+#   2. Recover the original remote file from a backup.
+#
+# Steps (in patch mode):
+#   1. Upload a local file (`LOCAL_FILE`) to a temporary location (`REMOTE_UPLOAD_FILE`) on the remote server.
+#   2. Backup the target remote file (`REMOTE_FILE`) to a backup path (`REMOTE_BACKUP_FILE`).
+#   3. Overwrite the remote target file (`REMOTE_FILE`) with the uploaded file.
+#
+# Steps (in recover mode):
+#   1. Overwrite the current remote file (`REMOTE_FILE`) with the backup (`REMOTE_BACKUP_FILE`).
+#
+# Script Options (variables inside this script):
+#   * LOCAL_FILE         : Path to the local file that will be uploaded.
+#   * REMOTE_UPLOAD_FILE : Remote file path where the local file will be uploaded.
+#   * REMOTE_FILE        : The original remote file to be backed up before overwriting.
+#   * REMOTE_BACKUP_FILE : Path where the backup of REMOTE_FILE will be stored.
+
+#   * USE_RSYNC          : (true/false) If true, use 'rsync' for uploading; otherwise use 'scp'.
+#   * SILENT             : (true/false) If true, suppresses all confirmation prompts (auto-approve).
+#
+# Prerequisites:
+#   1. Configure variables in `scripts/AAA/config/server.sh`:
+#        - REMOTE_HOST
+#        - REMOTE_USER
+#        - REMOTE_SSH_PORT (default: 22)
+#        - REMOTE_PWD
+#
+# Usage:
+#   * ./scripts/patchr.sh            # Patch remote file
+#   * ./scripts/patchr.sh recover    # Recover from backup
+#
+# Example (with default options defined in this script):
+#   * ./scripts/patchr.sh            # Patch remote file
+#   * ./scripts/patchr.sh recover    # Recover from backup
+#
+# Global Env:
+#   * ROOT : The absolute path of scripts directory.
+#
+# Author: Craig Brown
+# Since: 1.1.0
+# Date: April 16, 2025
+# ************************************************************************************
+source "$(dirname "${BASH_SOURCE[0]}")/AAA/config/global.sh"
+
+# ================================================================== Required Configurations
+source "$ROOT/AAA/config/server.sh"
+
+# Example (in server.sh):
+# REMOTE_HOST='192.168.127.131'
+# REMOTE_SSH_PORT='22'
+# REMOTE_USER='test99'
+# REMOTE_PWD='testpwd'
+
+# Upload the LOCAL_FILE to the REMOTE_UPLOAD_FILE
+LOCAL_FILE="$ROOT/AAA/assets/example-patch.txt"
+REMOTE_UPLOAD_FILE='~/tmp/example-patch.txt.upload'
+
+# Copy the REMOTE_FILE to REMOTE_BACKUP_FILE before overwriting
+REMOTE_FILE='~/example-patch-remote.txt'
+REMOTE_BACKUP_FILE='~/tmp/example-patch-remote.txt.bak'
+
+# ================================================================== Optional Configurations
+SILENT=false
+USE_RSYNC=false
+
+# ================================================================== Functions
+source "$ROOT/AAA/common/functions.sh"
+source "$ROOT/AAA/common/upload.sh"
+set -e
+
+# ================================================================== Logic
+trust_host
+resolved_remote_upload_file=$(resolve_remote_path "$REMOTE_UPLOAD_FILE")
+resolved_remote_file=$(resolve_remote_path "$REMOTE_FILE")
+# ================================================================== Recovery Mode
+if [ "$1" == "recover" ]; then
+  ask $SILENT "Do you want to restore the remote file '$REMOTE_FILE' from the backup file '$REMOTE_BACKUP_FILE'? (y/n): "
+  remote_execute "cp $REMOTE_BACKUP_FILE $REMOTE_FILE -f"
+  echo "[INFO] Recovery completed."
+  exit 0
+fi
+
+# ================================================================== 1. Upload File
+echo "==================================== Upload the local file"
+echo "Local file info:"
+ls -al "$LOCAL_FILE"
+
+if remote_execute "[ -f \"$REMOTE_UPLOAD_FILE\" ]"; then
+  ask $SILENT "The remote file '$REMOTE_UPLOAD_FILE' already exists. Do you want to overwrite it with '$LOCAL_FILE'? (y/n): "
+else
+  ask $SILENT "Do you want to upload '$LOCAL_FILE' to '$REMOTE_UPLOAD_FILE'? (y/n): "
+fi
+
+upload_file_to_file $LOCAL_FILE $resolved_remote_upload_file
+echo
+echo "Upload completed. Printing uploaded file info:"
+remote_execute "ls -al $REMOTE_UPLOAD_FILE"
+ask $SILENT "Is the local file successfully uploaded? (y/n): "
+echo
+
+# ================================================================== 2. Backup File
+echo "==================================== Backup the server file"
+if ! remote_execute "[ -f \"$resolved_remote_file\" ]"; then
+  echo "[ERROR] Remote file does not exist: $REMOTE_FILE"
+  echo "Aborting script."
+  exit 1
+fi
+
+echo "Remote file info before backup:"
+remote_execute "ls -al $REMOTE_FILE"
+ask $SILENT "Do you want to back up the remote file '$REMOTE_FILE' to '$REMOTE_BACKUP_FILE'? (y/n): "
+remote_execute "cp $REMOTE_FILE $REMOTE_BACKUP_FILE -f"
+echo
+echo "Backup completed. Printing backup file info:"
+remote_execute "ls -al $REMOTE_BACKUP_FILE"
+ask $SILENT "Is the backup file created successfully? (y/n): "
+echo
+
+# ================================================================== 3. Overwrite File
+echo "==================================== Overwrite the server file"
+remote_execute "ls -al $REMOTE_UPLOAD_FILE"
+ask $SILENT "Do you want to overwrite the remote file '$REMOTE_FILE' with the uploaded file '$REMOTE_UPLOAD_FILE'? (y/n): "
+remote_execute "cp $REMOTE_UPLOAD_FILE $REMOTE_FILE -f"
+echo
+echo "Overwrite completed. Final file info:"
+remote_execute "ls -al $REMOTE_FILE"

@@ -1,0 +1,10 @@
+spring:
+  jackson:
+    time-zone: UTC
+    date-format: yyyy-MM-dd'T'HH:mm:ss.SSS'Z'
+logging:
+  config: classpath:logback-simi.xml
+  level:
+    root: INFO
+    org.apache.kafka: WARN
+    org.apache.kafka.clients.consumer.internals: ERROR

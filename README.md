@@ -1,75 +1,112 @@
 # Table of Contents
+- [Table of Contents](#table-of-contents)
 - [Introduction](#introduction)
-- [Directory Structure](#directory-structure)
-  - [docs](#docs)
-    - [Algorithms.md](#algorithmsmd)
-    - [Env.md](#envmd)
-    - [Standards.md](#standardsmd)
-  - [Simi Sandbox](#simi-sandbox)
+- [Functionalities](#functionalities)
+  - [scripts/cpfiles.sh](#scriptscpfilessh)
+  - [scripts/execr.sh](#scriptsexecrsh)
+  - [scripts/patchr.sh](#scriptspatchrsh)
 # Introduction
-[Back to Top](#table-of-contents) 
+**Simi Sandbox** is a toolkit for transferring files, executing commands, and managing remote servers — including installing databases and dependencies.
+# Functionalities
+## [scripts/cpfiles.sh](./scripts/cpfiles.sh)
+![](./docs/assets/scripts/cpfiles.svg)  
+ This script automates uploading specific files or directories from `scripts/AAA/assets`
+ to a remote server.
 
-Simi is a modular maven project designed to explore various architectural and integration techniques, featuring detailed documentation to help you configure and use it.
-# Directory Structure
-[Back to Top](#table-of-contents)
-## docs
-### Algorithms.md
-This file contains solutions to various algorithm problems, each with detailed comments, explanations, and illustrative diagrams.  
-For more information, check out the [Algorithms File](docs/Algorithms.md).
+ Only files or folders listed in `scripts/AAA/config/path-mapping.properties` will be transferred.
+ Server credentials are defined in `scripts/AAA/config/server.sh`, and each entry is mapped
+ to a target directory on the remote server.
 
-### Env.md
-This file contains details about the local runtime environment.
+ Each overwrite operation prompts a confirmation warning to ensure safety, unless `SILENT=true` is set.
 
-For more information, check out the [Env File](docs/Env.md).
+ The script uses SCP or rsync for secure transfer and can optionally overwrite
+ existing files/directories on the remote side.
 
-### Configuration.md
-A guide for configuring various server or CI/CD environments.
+ Prerequisites:
+   1. Put your files or folders in the `scripts/AAA/assets` folder.
+   2. Define path mappings in `scripts/AAA/config/path-mapping.properties`.
+   3. Configure variables in `scripts/AAA/config/server.sh`:
+        - REMOTE_HOST
+        - REMOTE_USER
+        - REMOTE_SSH_PORT (default: 22)
+        - REMOTE_PWD
 
-For more information, check out the [Configuration File](docs/Configuration.md).
-### SystemDesign.md
-A guild for designing system functionalities and establishing development standards.
+ Usage:
+   * ./scripts/cpfiles.sh
 
-For more information, check out the [SystemDesign File](docs/SystemDesign.md).
-## AAA 
-A resource directory containing startup configuration files needed by other modules.
+ Example (with default options defined in this script):
+   * ./scripts/cpfiles.sh
 
-## scripts
-A folder containing bash and batch files required by other modules.
-* cpfiles.sh
-  - Copy local files to remote server.
-* execr.sh
-  - Execute a remote bash script with its environment variables.
-* simidep.sh 
-  - Deploy a jar file to remote server.
+ Script Options (variables inside this script):
+   * IS_OVERWRITE : (true/false) Whether to overwrite existing remote files/directories.
+                  When true, script prompts before deleting remote files/dirs unless SILENT=true.
 
-## simi-sandbox
-The simi-sandbox is a dedicated Maven module designed as a versatile environment for testing, experimenting, and showcasing various code implementations.
+   * USE_RSYNC    : (true/false) Use 'rsync' for uploading instead of 'scp'.
 
-### simi-cap  
-Simi Cap is a CAP demo application.  
-The [Cloud Application Programming Model (CAP)](https://cap.cloud.sap/docs/java/getting-started) is a framework of languages, libraries, and tools for building enterprise-grade services and applications.
+   * SILENT       : (true/false) If true, disables all confirmation prompts (auto-approve).
 
-## simi-app
-Some simple applications that includes specific functionalities.
+ Global Env:
+   * ROOT : The absolute path of scripts directory.
 
-### simi-initializer-app  
-Simi Initializer is an IntelliJ IDEA plugin designed to streamline the initial configuration of Maven projects with complex local setups.  
-It automates startup configurations like adjusting certificate file locations, adding local-specific dependencies, and modifying server IP addresses.
+## [scripts/execr.sh](./scripts/execr.sh)
+![](./docs/assets/scripts/execr.svg)  
+ This script executes a local bash file on the remote server without copying it.
+ The first parameter of this Bash script is a local Bash file, which will be
+ executed directly on the remote server. The working path defaults to the user home.
 
-### simi-sgz  
-Simi Sgz is an automation script module designed for the game <a href="https://sangokushi.qookkagames.jp">Three Kingdoms Tactics<a/>.
+ Prerequisites:
+   1. Create your custom bash file for remote execution (e.g. ./AAA/assets/example-bash.sh).
+   2. Configure variables in `scripts/AAA/config/server.sh`:
+        - REMOTE_HOST
+        - REMOTE_USER
+        - REMOTE_SSH_PORT (default: 22)
+        - REMOTE_PWD
 
-## simi-common
-Common modules shared by other modules.
+ Usage:
+   * ./scripts/exec.sh <local-bash-file-path>
 
-## simi-config
-Common configuration files for use by other modules.
+ Example (with default options defined in this script):
+   * ./scripts/execr.sh ./scripts/AAA/assets/example-bash.sh
 
-## simi-custom
-Custom modules.
+ Global Env:
+   * ROOT : The absolute path of scripts directory.
 
-## simi-gateway
-Gateway modules.
+## [scripts/patchr.sh](./scripts/patchr.sh)
+![](./docs/assets/scripts/patchr.svg)  
+ This script safely patches a remote file on a server using one of two modes:
+   1. Upload a local file and replace a target remote file.
+   2. Recover the original remote file from a backup.
 
-## simi-parent
-A parent module that manages the dependency versions of other modules.
+ Steps (in patch mode):
+   1. Upload a local file (`LOCAL_FILE`) to a temporary location (`REMOTE_UPLOAD_FILE`) on the remote server.
+   2. Backup the target remote file (`REMOTE_FILE`) to a backup path (`REMOTE_BACKUP_FILE`).
+   3. Overwrite the remote target file (`REMOTE_FILE`) with the uploaded file.
+
+ Steps (in recover mode):
+   1. Overwrite the current remote file (`REMOTE_FILE`) with the backup (`REMOTE_BACKUP_FILE`).
+
+ Script Options (variables inside this script):
+   * LOCAL_FILE         : Path to the local file that will be uploaded.
+   * REMOTE_UPLOAD_FILE : Remote file path where the local file will be uploaded.
+   * REMOTE_FILE        : The original remote file to be backed up before overwriting.
+   * REMOTE_BACKUP_FILE : Path where the backup of REMOTE_FILE will be stored.
+   * USE_RSYNC          : (true/false) If true, use 'rsync' for uploading; otherwise use 'scp'.
+   * SILENT             : (true/false) If true, suppresses all confirmation prompts (auto-approve).
+
+ Prerequisites:
+   1. Configure variables in `scripts/AAA/config/server.sh`:
+        - REMOTE_HOST
+        - REMOTE_USER
+        - REMOTE_SSH_PORT (default: 22)
+        - REMOTE_PWD
+
+ Usage:
+   * ./scripts/patchr.sh            # Patch remote file
+   * ./scripts/patchr.sh recover    # Recover from backup
+
+ Example (with default options defined in this script):
+   * ./scripts/patchr.sh            # Patch remote file
+   * ./scripts/patchr.sh recover    # Recover from backup
+
+ Global Env:
+   * ROOT : The absolute path of scripts directory.
