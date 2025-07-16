@@ -1,7 +1,6 @@
 /AAAlogs/
 /logs/
 
-
 target/
 node_modules/
 .idea/

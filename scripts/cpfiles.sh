@@ -75,9 +75,9 @@ USE_RSYNC=false
 # Ask warning messages
 SILENT=false
 # Load file-to-directory mappings from properties file
-properties_file="$ROOT/AAA/config/path-mapping.properties"
+PROPERTIES_FILE="$ROOT/AAA/config/path-mapping.properties"
 # Assets
-assets_directory="$ROOT/AAA/assets"
+ASSETS_ROOT="$ROOT/AAA/assets"
 
 # ================================================================== Functions
 source "$ROOT/AAA/common/functions.sh"
@@ -85,8 +85,8 @@ source "$ROOT/AAA/common/upload.sh"
 declare -A file_mappings
 
 load_properties() {
-    if [[ ! -f "$properties_file" ]]; then
-        echo "[ERROR] Mapping file not found '$properties_file'"
+    if [[ ! -f "$PROPERTIES_FILE" ]]; then
+        echo "[ERROR] Mapping file not found '$PROPERTIES_FILE'"
         exit 1
     fi
 
@@ -95,13 +95,13 @@ load_properties() {
         local_path=$(echo "$local_path" | xargs)
         target_path=$(echo "$target_path" | xargs)
         [[ -n "$local_path" && -n "$target_path" ]] && file_mappings["$local_path"]="$target_path"
-    done < "$properties_file"
+    done < "$PROPERTIES_FILE"
 }
 
 upload_files() {
   echo "[INFO] Starting upload process..."
   for item in "${!file_mappings[@]}"; do
-    local_path="$assets_directory/$item"
+    local_path="$ASSETS_ROOT/$item"
     remote_dir="${file_mappings[$item]}"
     # echo "folder or file: $local_path"
 
