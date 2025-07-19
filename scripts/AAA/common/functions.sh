@@ -35,8 +35,15 @@ check_required_env_vars() {
 check_required_env_vars ROOT REMOTE_HOST REMOTE_SSH_PORT REMOTE_USER REMOTE_PWD
 
 trust_host() {
-  local known_hosts_file=~/.ssh/known_hosts
+  local ssh_dir="$HOME/.ssh"
+  local known_hosts_file="$ssh_dir/known_hosts"
   local search_entry
+
+  # Do nothing if ~/.ssh does not exist
+  if [ ! -d "$ssh_dir" ]; then
+    echo "[INFO] ~/.ssh does not exist. Skipping trust setup for $REMOTE_HOST."
+    return
+  fi
 
   if [[ "$REMOTE_SSH_PORT" == "22" ]]; then
     search_entry="$REMOTE_HOST"
@@ -44,12 +51,14 @@ trust_host() {
     search_entry="[$REMOTE_HOST]:$REMOTE_SSH_PORT"
   fi
 
-  if grep -qF "$search_entry" "$known_hosts_file"; then
+  if grep -qF "$search_entry" "$known_hosts_file" 2>/dev/null; then
     echo "[INFO] Host $search_entry already trusted, skipping."
   else
     echo "[INFO] Trusting $search_entry ..."
-    ssh-keygen -R "$REMOTE_HOST" -p "$REMOTE_SSH_PORT" > /dev/null 2>&1
-    ssh-keyscan -p "$REMOTE_SSH_PORT" "$REMOTE_HOST" >> "$known_hosts_file" 2>/dev/null
+    ssh-keygen -R "$search_entry" > /dev/null 2>&1 || true
+    ssh-keyscan -p "$REMOTE_SSH_PORT" "$REMOTE_HOST" >> "$known_hosts_file" 2>/dev/null || {
+      echo "[WARN] ssh-keyscan failed for $search_entry"
+    }
   fi
 }
 
