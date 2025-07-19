@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2012-2024 the original author or authors.
+# Copyright 2022-2025 the original author or authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,6 +25,30 @@
 # Steps (in recover mode):
 #   1. Overwrite the current remote file (`REMOTE_FILE`) with the backup (`REMOTE_BACKUP_FILE`).
 #
+# Prerequisites:
+#   1. Configure variables in `scripts/AAA/config/server.sh`:
+#        - REMOTE_HOST
+#        - REMOTE_USER
+#        - REMOTE_SSH_PORT (default: 22)
+#        - REMOTE_PWD
+#   2. Create a file `~/example-patch-remote.txt` on your remote server for testing purposes.
+#
+# Examples (run directly for easy start, using default settings):
+#   * ./scripts/patchr.sh
+#
+#        Patch remote file `~/example-patch-remote.txt` with the local file `scripts/AAA/assets/example-patch.txt`
+#   * ./scripts/patchr.sh recover
+#
+#        Recover from backup
+#
+# Usage:
+#   * ./scripts/patchr.sh
+#
+#        Patch remote file
+#   * ./scripts/patchr.sh recover
+#
+#        Recover from backup
+#
 # Script Options (variables inside this script):
 #   * LOCAL_FILE         : Path to the local file that will be uploaded.
 #   * REMOTE_UPLOAD_FILE : Remote file path where the local file will be uploaded.
@@ -33,21 +57,6 @@
 
 #   * USE_RSYNC          : (true/false) If true, use 'rsync' for uploading; otherwise use 'scp'.
 #   * SILENT             : (true/false) If true, suppresses all confirmation prompts (auto-approve).
-#
-# Prerequisites:
-#   1. Configure variables in `scripts/AAA/config/server.sh`:
-#        - REMOTE_HOST
-#        - REMOTE_USER
-#        - REMOTE_SSH_PORT (default: 22)
-#        - REMOTE_PWD
-#
-# Usage:
-#   * ./scripts/patchr.sh            # Patch remote file
-#   * ./scripts/patchr.sh recover    # Recover from backup
-#
-# Example (with default options defined in this script):
-#   * ./scripts/patchr.sh            # Patch remote file
-#   * ./scripts/patchr.sh recover    # Recover from backup
 #
 # Global Env:
 #   * ROOT : The absolute path of scripts directory.
@@ -60,7 +69,6 @@ source "$(dirname "${BASH_SOURCE[0]}")/AAA/config/global.sh"
 
 # ================================================================== Required Configurations
 source "$ROOT/AAA/config/server.sh"
-
 # Example (in server.sh):
 # REMOTE_HOST='192.168.127.131'
 # REMOTE_SSH_PORT='22'
@@ -107,7 +115,7 @@ else
   ask $SILENT "Do you want to upload '$LOCAL_FILE' to '$REMOTE_UPLOAD_FILE'? (y/n): "
 fi
 
-upload_file_to_file $LOCAL_FILE $resolved_remote_upload_file
+upload_file_to_file "$LOCAL_FILE" "$resolved_remote_upload_file" $USE_RSYNC $SILENT
 echo
 echo "Upload completed. Printing uploaded file info:"
 remote_execute "ls -al $REMOTE_UPLOAD_FILE"

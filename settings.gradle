@@ -1,3 +1,0 @@
-rootProject.name = 'simi-sandbox'
-
-include ":simi-java-sandbox:extension-test:quartz-test"

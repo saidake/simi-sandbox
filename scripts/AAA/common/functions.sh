@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright 2012-2024 the original author or authors.
+# Copyright 2022-2025 the original author or authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,16 +23,33 @@
 _FUNCTIONS_SH_INCLUDED=1
 
 check_required_env_vars() {
+  local message="$1"
+  shift
   local vars=("$@")
+  local missing_vars=()
 
   for var_name in "${vars[@]}"; do
     if [[ -z "${!var_name}" ]]; then
-      echo "[ERROR] Required environment variable '$var_name' is not set. Please source config/server.sh before this script." >&2
-      exit 1
+      missing_vars+=("$var_name")
     fi
   done
+
+  if [[ ${#missing_vars[@]} -gt 0 ]]; then
+    echo "[ERROR] $message" >&2
+    echo "Missing environment variables: ${missing_vars[*]}" >&2
+    exit 1
+  fi
 }
-check_required_env_vars ROOT REMOTE_HOST REMOTE_SSH_PORT REMOTE_USER REMOTE_PWD
+
+check_required_env_vars \
+  "Please source config/global.sh before running this script." \
+  ROOT
+check_required_env_vars \
+  "Please source config/server.sh to configure server properties before running this script." \
+  REMOTE_HOST \
+  REMOTE_SSH_PORT \
+  REMOTE_USER \
+  REMOTE_PWD
 
 trust_host() {
   local ssh_dir="$HOME/.ssh"

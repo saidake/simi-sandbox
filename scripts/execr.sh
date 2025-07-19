@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2012-2024 the original author or authors.
+# Copyright 2012-2025 the original author or authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,20 +17,31 @@
 # The first parameter of this Bash script is a local Bash file, which will be
 # executed directly on the remote server. The working path defaults to the user home.
 #
+# Note: This script uses your provided credentials to switch to the **root** user in order to
+# execute commands with **sudo** privileges.
+#
 # Prerequisites:
-#   1. Create your custom bash file for remote execution (e.g. ./AAA/assets/example-bash.sh).
-#   2. Configure variables in `scripts/AAA/config/server.sh`:
+#   1. Configure variables in `scripts/AAA/config/server.sh`:
 #        - REMOTE_HOST
 #        - REMOTE_USER
 #        - REMOTE_SSH_PORT (default: 22)
 #        - REMOTE_PWD
 #
+# Examples (run directly for easy start, using default settings):
+#   * ./scripts/execr.sh ./scripts/AAA/assets/example-bash.sh
+#
+#      Execute the bash file `./scripts/AAA/assets/example-bash.sh` on your remote server.
+#
 # Usage:
 #   * ./scripts/exec.sh <local-bash-file-path>
 #
-# Example (with default options defined in this script):
-#   * ./scripts/execr.sh ./scripts/AAA/assets/example-bash.sh
+# Script Options (variables in this script):
+#   * USE_RSYNC    : (true/false) Use 'rsync' for uploading instead of 'scp'.
 #
+#   * SILENT       : (true/false) If true, disables all confirmation prompts (auto-approve).
+#   * LOCAL_BASH_FILE       : Local bash file to execute
+#   * REMOTE_TMP_BASH_FILE  : The local bash script will be uploaded to this path on the remote server.
+
 # Global Env:
 #   * ROOT : The absolute path of scripts directory.
 #
@@ -43,32 +54,47 @@ source "$(dirname "${BASH_SOURCE[0]}")/AAA/config/global.sh"
 # ================================================================== Required Configurations
 # Import global environment variables
 source "$ROOT/AAA/config/server.sh"
-# Example:
+# Example (in server.sh):
 # REMOTE_HOST='192.168.127.131'
 # REMOTE_SSH_PORT='22'
 # REMOTE_USER='test99'
 # REMOTE_PWD='testpwd'
 
 # ================================================================== Default Configurations
-REMOTE_WORK_PATH='~'  # Remote working directory
-LOCAL_BASH_PATH="$1"     # Local bash file to execute
+LOCAL_BASH_FILE="$1"     # Local bash file to execute
+REMOTE_TMP_BASH_FILE="/tmp/execr-remote-execution.sh"  # The local bash script will be uploaded to this path on the remote server
 
+SILENT=false
+USE_RSYNC=false
 # ================================================================== Validate Input
 source "$ROOT/AAA/common/functions.sh"
+source "$ROOT/AAA/common/upload.sh"
 trust_host
 
-if [[ -z "$LOCAL_BASH_PATH" ]]; then
+if [[ -z "$LOCAL_BASH_FILE" ]]; then
   echo "[ERROR] No bash script file provided. Please pass the script file path as an argument."
   exit 1
 fi
 
-if [[ ! -f "$LOCAL_BASH_PATH" ]]; then
-  echo "[ERROR] File does not exist: $LOCAL_BASH_PATH"
+if [[ ! -f "$LOCAL_BASH_FILE" ]]; then
+  echo "[ERROR] File does not exist: $LOCAL_BASH_FILE"
   exit 1
 fi
 
 # ================================================================== Execute Remotely
-echo "[INFO] Executing '$LOCAL_BASH_PATH' on remote host $REMOTE_USER@$REMOTE_HOST..."
+echo "[INFO] Executing '$LOCAL_BASH_FILE' on remote host $REMOTE_USER@$REMOTE_HOST..."
 
 # Use sshpass to pass the password
-remote_execute "cd $REMOTE_WORK_PATH && bash -l -c 'bash -s'" < "$LOCAL_BASH_PATH"
+#remote_execute "cd $REMOTE_WORK_PATH && bash -l -c 'bash -s'" < "$LOCAL_BASH_FILE"
+#remote_execute "cd $REMOTE_WORK_PATH && echo \"$REMOTE_PWD\" | sudo -S bash -l -c 'bash -s'" < "$LOCAL_BASH_FILE"
+#remote_execute "cd $REMOTE_WORK_PATH && sudo -S bash -l -s" < "$LOCAL_BASH_FILE"
+#remote_execute "cd $REMOTE_WORK_PATH && echo \"$REMOTE_PWD\" | sudo -S bash -l -s" < "$LOCAL_BASH_FILE"
+#remote_execute "cd $REMOTE_WORK_PATH && echo \"$REMOTE_PWD\" | sudo -S bash -l -s" < "$LOCAL_BASH_FILE"
+#sshpass -p "$REMOTE_PWD" ssh -p "$REMOTE_SSH_PORT" "$REMOTE_USER@$REMOTE_HOST" << EOF
+#echo "$REMOTE_PWD" | sudo -S pwd
+#pwd
+#EOF
+#remote_execute "cd $REMOTE_WORK_PATH && echo \"$REMOTE_PWD\" | sudo -S bash -l -s" < "$LOCAL_BASH_FILE"
+upload_file_to_file "$LOCAL_BASH_FILE" "$REMOTE_TMP_BASH_FILE" $USE_RSYNC $SILENT
+#remote_execute "echo \"$REMOTE_PWD\" | sudo -S bash $REMOTE_TMP_BASH_FILE && rm -f $REMOTE_TMP_BASH_FILE"
+remote_execute "echo \"$REMOTE_PWD\" | sudo -S bash -c 'echo; echo \"[INFO] Start Execution\"; bash \"$REMOTE_TMP_BASH_FILE\"; rm -f \"$REMOTE_TMP_BASH_FILE\"'"

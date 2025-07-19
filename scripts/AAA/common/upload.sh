@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright 2012-2024 the original author or authors.
+# Copyright 2022-2025 the original author or authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,12 +22,14 @@
 [[ -n "$_UPLOAD_SH_INCLUDED" ]] && return
 _UPLOAD_SH_INCLUDED=1
 
-check_required_env_vars ROOT USE_RSYNC SILENT
 source "$ROOT/AAA/common/functions.sh"
 
 upload_file_or_dir_to_dir() {
   local source="$1"
-  remote_dir="$2"
+  local remote_dir="$2"
+  local use_rsync="$3"
+  local silent="$4"
+
   absolute_remote_dir=$(resolve_remote_path "$remote_dir")
 
   if [[ ! -e "$source" ]]; then
@@ -52,20 +54,25 @@ upload_file_or_dir_to_dir() {
 
   if [[ -d "$source" ]]; then
     echo "[INFO] Uploading contents of directory '$source' to '$remote_dir' ..."
-
-    local item
     for item in "$source"/*; do
       local base_item
       base_item=$(basename "$item")
 
       if remote_execute "[[ -e \"$absolute_remote_dir/$base_item\" ]]"; then
-        ask "$SILENT" "[WARN] '$base_item' already exists in '$remote_dir'. Overwrite? (y/n): "
+        ask "$silent" "[WARN] '$base_item' already exists in '$remote_dir'. Overwrite? (y/n): "
       fi
 
-      if [[ "$USE_RSYNC" == true ]]; then
+      if [[ "$use_rsync" == true ]]; then
         sshpass -p "$REMOTE_PWD" rsync -avz -e "ssh -p $REMOTE_SSH_PORT" "$item" "$REMOTE_USER@$REMOTE_HOST:$absolute_remote_dir"
       else
         sshpass -p "$REMOTE_PWD" scp -r -P "$REMOTE_SSH_PORT" "$item" "$REMOTE_USER@$REMOTE_HOST:$absolute_remote_dir"
+      fi
+
+      if [[ $? -ne 0 ]]; then
+        echo "[ERROR] Failed to upload '$item' to '$remote_dir'." >&2
+        exit 1
+      else
+        echo "[INFO] Successfully uploaded '$item' to '$remote_dir'."
       fi
     done
 
@@ -74,14 +81,21 @@ upload_file_or_dir_to_dir() {
     base_file=$(basename "$source")
 
     if remote_execute "[[ -e \"$absolute_remote_dir/$base_file\" ]]"; then
-      ask "$SILENT" "[WARN] '$base_file' already exists in '$remote_dir'. Overwrite? (y/n): "
+      ask "$silent" "[WARN] '$base_file' already exists in '$remote_dir'. Overwrite? (y/n): "
     fi
 
     echo "[INFO] Uploading file '$source' to '$remote_dir' ..."
-    if [[ "$USE_RSYNC" == true ]]; then
+    if [[ "$use_rsync" == true ]]; then
       sshpass -p "$REMOTE_PWD" rsync -avz -e "ssh -p $REMOTE_SSH_PORT" "$source" "$REMOTE_USER@$REMOTE_HOST:$absolute_remote_dir"
     else
       sshpass -p "$REMOTE_PWD" scp -P "$REMOTE_SSH_PORT" "$source" "$REMOTE_USER@$REMOTE_HOST:$absolute_remote_dir"
+    fi
+
+    if [[ $? -ne 0 ]]; then
+      echo "[ERROR] Failed to upload '$source' to '$remote_dir'." >&2
+      exit 1
+    else
+      echo "[INFO] Successfully uploaded '$source' to '$remote_dir'."
     fi
 
   else
@@ -90,9 +104,12 @@ upload_file_or_dir_to_dir() {
   fi
 }
 
+
 upload_file_to_file() {
   local local_file="$1"
   local remote_file="$2"
+  local use_rsync="$3"
+  local silent="$4"
 
   if [[ ! -f "$local_file" ]]; then
     echo "[ERROR] Local file '$local_file' does not exist or is not a regular file." >&2
@@ -103,7 +120,7 @@ upload_file_to_file() {
   absolute_remote_file="$(resolve_remote_path "$remote_file")"
 
   if remote_file_exists "$absolute_remote_file"; then
-    ask "$SILENT" "[WARN] Remote file '$remote_file' already exists. Overwrite? (y/n): "
+    ask "$silent" "[WARN] Remote file '$remote_file' already exists. Overwrite? (y/n): "
   else
     local remote_dir
     remote_dir="$(dirname "$absolute_remote_file")"
@@ -114,9 +131,16 @@ upload_file_to_file() {
   fi
 
   echo "[INFO] Uploading file '$local_file' to remote '$remote_file' ..."
-  if [[ "$USE_RSYNC" == true ]]; then
+  if [[ "$use_rsync" == true ]]; then
     sshpass -p "$REMOTE_PWD" rsync -avz -e "ssh -p $REMOTE_SSH_PORT" "$local_file" "$REMOTE_USER@$REMOTE_HOST:$absolute_remote_file"
   else
     sshpass -p "$REMOTE_PWD" scp -P "$REMOTE_SSH_PORT" "$local_file" "$REMOTE_USER@$REMOTE_HOST:$absolute_remote_file"
+  fi
+
+  if [[ $? -ne 0 ]]; then
+    echo "[ERROR] Failed to upload '$local_file' to '$remote_file'." >&2
+    exit 1
+  else
+    echo "[INFO] Successfully uploaded '$local_file' to '$remote_file'."
   fi
 }
