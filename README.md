@@ -5,11 +5,12 @@
   - [scripts/cpfiles.sh](#scriptscpfilessh)
   - [scripts/execr.sh](#scriptsexecrsh)
   - [scripts/patchr.sh](#scriptspatchrsh)
-- [Env Helper](#env-helper)
+- [Environment Configuration Helper](#environment-configuration-helper)
   - [Docker and Docker Compose](#docker-and-docker-compose)
   - [AWS LocalStack](#aws-localstack)
 # Introduction
-**Simi Sandbox** is a toolkit for transferring files, executing commands, and managing remote servers — including installing databases and dependencies.
+**Simi Sandbox** is a developer-friendly toolkit for remote server management — enabling file transfer, command execution, and automated dependency setup.
+
 # Core Scripts
 ## [scripts/cpfiles.sh](./scripts/cpfiles.sh)
 ![](./docs/assets/scripts/cpfiles.svg)  
@@ -135,7 +136,7 @@
 
  Global Env:
    * ROOT : The absolute path of scripts directory.
-# Env Helper
+# Environment Configuration Helper
 ## Docker and Docker Compose
 Instructions to install and configure Docker and Docker Compose on your system.
 

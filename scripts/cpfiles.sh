@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-########################################################################################
+# ************************************************************************************
 # This script automates uploading specific files or directories from `scripts/AAA/assets`
 # to a remote server.
 #
@@ -57,7 +57,7 @@
 # Author: Craig Brown
 # Since : 1.1.0
 # Date  : July 8, 2025
-########################################################################################
+# ************************************************************************************
 source "$(dirname "${BASH_SOURCE[0]}")/AAA/config/global.sh"
 
 # ================================================================== Required Configurations
