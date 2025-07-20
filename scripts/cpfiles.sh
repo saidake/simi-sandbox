@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2012-2024 the original author or authors.
+# Copyright 2022-2025 the original author or authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,104 +17,84 @@
 # to a remote server.
 #
 # Only files or folders listed in `scripts/AAA/config/path-mapping.properties` will be transferred.
-# Server credentials are defined in `scripts/AAA/config/server.sh`, and each entry is mapped
+# Server credentials are defined in `scripts/AAA/config/server.sh`, and each entry maps
 # to a target directory on the remote server.
 #
-# Each overwrite operation prompts a confirmation warning to ensure safety, unless `SILENT=true` is set.
+# Overwrite operations prompt for confirmation to ensure safety, unless SILENT=true is set.
 #
-# The script uses SCP or rsync for secure transfer and can optionally overwrite
-# existing files/directories on the remote side.
+# Transfers use SCP or rsync securely, with optional overwrite of existing remote files/dirs.
 #
 # Prerequisites:
-#   1. Put your files or folders in the `scripts/AAA/assets` folder.
-#   2. Define path mappings in `scripts/AAA/config/path-mapping.properties`.
-#   3. Configure variables in `scripts/AAA/config/server.sh`:
+#   1. Configure server variables in `scripts/AAA/config/server.sh`:
 #        - REMOTE_HOST
 #        - REMOTE_USER
 #        - REMOTE_SSH_PORT (default: 22)
 #        - REMOTE_PWD
 #
+# Examples (run directly for easy start, using default settings):
+#   * ./scripts/cpfiles.sh
+#
+#       Copies `example1.txt` to the test server’s home directory (~),
+#       and copies `example2.txt` and `example3.txt` from `scripts/AAA/assets/exampledir` to the remote directory
+#       `targetdir` on the test server.
+#
 # Usage:
-#   * ./scripts/cpfiles.sh
+#   * ./scripts/cpfiles.sh [<env.sh>]
 #
-# Example (with default options defined in this script):
-#   * ./scripts/cpfiles.sh
+#      You can define script options in a specified `env.sh` to override the default options in this script.
 #
-# Script Options (variables inside this script):
-#   * IS_OVERWRITE : (true/false) Whether to overwrite existing remote files/directories.
-#                  When true, script prompts before deleting remote files/dirs unless SILENT=true.
-#
+# Script Options (variables in this script):
 #   * USE_RSYNC    : (true/false) Use 'rsync' for uploading instead of 'scp'.
 #
-#   * SILENT       : (true/false) If true, disables all confirmation prompts (auto-approve).
+#   * SILENT       : (true/false) If true, disables all overwrite confirmation prompts (auto-approve).
+#   * PROPERTIES_FILE   : Copies the folder contents or files corresponding to the keys in the properties file
+#       to the remote directories specified by the values.
+#   * ASSETS_ROOT       : The base directory where the relative paths (keys) from PROPERTIES_FILE are located.
 #
-# Global Env:
-#   * ROOT : The absolute path of scripts directory.
+# Global Environment Variables:
+#   * ROOT : The absolute path of the scripts directory.
 #
 # Author: Craig Brown
-# Since: 1.1.0
-# Date: July 8, 2025
+# Since : 1.1.0
+# Date  : July 8, 2025
 # ************************************************************************************
-# shellcheck disable=SC2034
 source "$(dirname "${BASH_SOURCE[0]}")/AAA/config/global.sh"
 
 # ================================================================== Required Configurations
 # Import global environment variables
 source "$ROOT/AAA/config/server.sh"
-# Customize the values if needed
+# Example (in server.sh):
 # REMOTE_HOST='192.168.127.131'
 # REMOTE_SSH_PORT='22'
 # REMOTE_USER='test99'
 # REMOTE_PWD='testpwd'
 
 # ================================================================== Default Configurations
-# Overwrite the old file or folder.
-IS_OVERWRITE=true
 # Use 'rsync' instead of 'scp'
 USE_RSYNC=false
 # Ask warning messages
 SILENT=false
 # Load file-to-directory mappings from properties file
-properties_file="$ROOT/AAA/config/path-mapping.properties"
+PROPERTIES_FILE="$ROOT/AAA/config/path-mapping.properties"
 # Assets
-assets_directory="$ROOT/AAA/assets"
+ASSETS_ROOT="$ROOT/AAA/assets"
 
 # ================================================================== Functions
+if [[ -n "$1" ]]; then
+  if [[ -f "$1" ]]; then
+    echo "[INFO] Loading override environment variables from $1 ..."
+    # shellcheck disable=SC1090
+    source "$1"
+  else
+    echo "[ERROR] Environment file '$1' not found."
+    exit 1
+  fi
+fi
+
+
 source "$ROOT/AAA/common/functions.sh"
-source "$ROOT/AAA/common/upload.sh"
-declare -A file_mappings
-
-load_properties() {
-    if [[ ! -f "$properties_file" ]]; then
-        echo "[ERROR] Mapping file not found '$properties_file'"
-        exit 1
-    fi
-
-    while IFS='=' read -r local_path target_path; do
-        # echo "Read line: local_path='$local_path', target_path='$target_path'" # Debug output
-        local_path=$(echo "$local_path" | xargs)
-        target_path=$(echo "$target_path" | xargs)
-        [[ -n "$local_path" && -n "$target_path" ]] && file_mappings["$local_path"]="$target_path"
-    done < "$properties_file"
-}
-
-upload_files() {
-  echo "[INFO] Starting upload process..."
-  for item in "${!file_mappings[@]}"; do
-    local_path="$assets_directory/$item"
-    remote_dir="${file_mappings[$item]}"
-    # echo "folder or file: $local_path"
-
-    if [[ -e "$local_path" ]]; then
-      upload_file_or_dir_to_dir "$local_path" "$remote_dir"
-    else
-      echo "[WARN] '$item' not found in assets. Skipping."
-    fi
-  done
-  echo "[INFO] Upload complete."
-}
+source "$ROOT/AAA/common/property_transfer.sh"
 
 # ================================================================== Logic
 trust_host
-load_properties
-upload_files
+upload_files_by_properties "$PROPERTIES_FILE" "$ASSETS_ROOT" $USE_RSYNC $SILENT

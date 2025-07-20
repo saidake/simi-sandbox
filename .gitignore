@@ -1,7 +1,6 @@
 /AAAlogs/
 /logs/
 
-
 target/
 node_modules/
 .idea/
@@ -15,7 +14,7 @@ package-lock.json
 
 # Ignore Gradle project-specific cache directory
 .gradle
-
+gradle/wrapper
 # Ignore Gradle build output directory
 build
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright 2012-2024 the original author or authors.
+# Copyright 2022-2025 the original author or authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,20 +23,44 @@
 _FUNCTIONS_SH_INCLUDED=1
 
 check_required_env_vars() {
+  local message="$1"
+  shift
   local vars=("$@")
+  local missing_vars=()
 
   for var_name in "${vars[@]}"; do
     if [[ -z "${!var_name}" ]]; then
-      echo "[ERROR] Required environment variable '$var_name' is not set. Please source config/server.sh before this script." >&2
-      exit 1
+      missing_vars+=("$var_name")
     fi
   done
+
+  if [[ ${#missing_vars[@]} -gt 0 ]]; then
+    echo "[ERROR] $message" >&2
+    echo "Missing environment variables: ${missing_vars[*]}" >&2
+    exit 1
+  fi
 }
-check_required_env_vars ROOT REMOTE_HOST REMOTE_SSH_PORT REMOTE_USER REMOTE_PWD
+
+check_required_env_vars \
+  "Please source config/global.sh before running this script." \
+  ROOT
+check_required_env_vars \
+  "Please source config/server.sh to configure server properties before running this script." \
+  REMOTE_HOST \
+  REMOTE_SSH_PORT \
+  REMOTE_USER \
+  REMOTE_PWD
 
 trust_host() {
-  local known_hosts_file=~/.ssh/known_hosts
+  local ssh_dir="$HOME/.ssh"
+  local known_hosts_file="$ssh_dir/known_hosts"
   local search_entry
+
+  # Do nothing if ~/.ssh does not exist
+  if [ ! -d "$ssh_dir" ]; then
+    echo "[INFO] ~/.ssh does not exist. Skipping trust setup for $REMOTE_HOST."
+    return
+  fi
 
   if [[ "$REMOTE_SSH_PORT" == "22" ]]; then
     search_entry="$REMOTE_HOST"
@@ -44,12 +68,14 @@ trust_host() {
     search_entry="[$REMOTE_HOST]:$REMOTE_SSH_PORT"
   fi
 
-  if grep -qF "$search_entry" "$known_hosts_file"; then
+  if grep -qF "$search_entry" "$known_hosts_file" 2>/dev/null; then
     echo "[INFO] Host $search_entry already trusted, skipping."
   else
     echo "[INFO] Trusting $search_entry ..."
-    ssh-keygen -R "$REMOTE_HOST" -p "$REMOTE_SSH_PORT" > /dev/null 2>&1
-    ssh-keyscan -p "$REMOTE_SSH_PORT" "$REMOTE_HOST" >> "$known_hosts_file" 2>/dev/null
+    ssh-keygen -R "$search_entry" > /dev/null 2>&1 || true
+    ssh-keyscan -p "$REMOTE_SSH_PORT" "$REMOTE_HOST" >> "$known_hosts_file" 2>/dev/null || {
+      echo "[WARN] ssh-keyscan failed for $search_entry"
+    }
   fi
 }
 

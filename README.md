@@ -1,72 +1,89 @@
 # Table of Contents
 - [Table of Contents](#table-of-contents)
 - [Introduction](#introduction)
-- [Functionalities](#functionalities)
+- [Core Scripts](#core-scripts)
   - [scripts/cpfiles.sh](#scriptscpfilessh)
   - [scripts/execr.sh](#scriptsexecrsh)
   - [scripts/patchr.sh](#scriptspatchrsh)
+- [Environment Configuration Helper](#environment-configuration-helper)
+  - [Docker and Docker Compose](#docker-and-docker-compose)
+  - [AWS LocalStack](#aws-localstack)
 # Introduction
-**Simi Sandbox** is a toolkit for transferring files, executing commands, and managing remote servers — including installing databases and dependencies.
-# Functionalities
+**Simi Sandbox** is a developer-friendly toolkit for remote server management — enabling file transfer, command execution, and automated dependency setup.
+
+# Core Scripts
 ## [scripts/cpfiles.sh](./scripts/cpfiles.sh)
 ![](./docs/assets/scripts/cpfiles.svg)  
  This script automates uploading specific files or directories from `scripts/AAA/assets`
  to a remote server.
 
  Only files or folders listed in `scripts/AAA/config/path-mapping.properties` will be transferred.
- Server credentials are defined in `scripts/AAA/config/server.sh`, and each entry is mapped
+ Server credentials are defined in `scripts/AAA/config/server.sh`, and each entry maps
  to a target directory on the remote server.
 
- Each overwrite operation prompts a confirmation warning to ensure safety, unless `SILENT=true` is set.
+ Overwrite operations prompt for confirmation to ensure safety, unless SILENT=true is set.
 
- The script uses SCP or rsync for secure transfer and can optionally overwrite
- existing files/directories on the remote side.
+ Transfers use SCP or rsync securely, with optional overwrite of existing remote files/dirs.
 
  Prerequisites:
-   1. Put your files or folders in the `scripts/AAA/assets` folder.
-   2. Define path mappings in `scripts/AAA/config/path-mapping.properties`.
-   3. Configure variables in `scripts/AAA/config/server.sh`:
+   1. Configure server variables in `scripts/AAA/config/server.sh`:
         - REMOTE_HOST
         - REMOTE_USER
         - REMOTE_SSH_PORT (default: 22)
         - REMOTE_PWD
 
+ Examples (run directly for easy start, using default settings):
+   * ./scripts/cpfiles.sh
+
+       Copies `example1.txt` to the test server’s home directory (~),
+       and copies `example2.txt` and `example3.txt` from `scripts/AAA/assets/exampledir` to the remote directory
+       `targetdir` on the test server.
+
  Usage:
-   * ./scripts/cpfiles.sh
+   * ./scripts/cpfiles.sh [<env.sh>]
 
- Example (with default options defined in this script):
-   * ./scripts/cpfiles.sh
+      You can define script options in a specified `env.sh` to override the default options in this script.
 
- Script Options (variables inside this script):
-   * IS_OVERWRITE : (true/false) Whether to overwrite existing remote files/directories.
-                  When true, script prompts before deleting remote files/dirs unless SILENT=true.
-
+ Script Options (variables in this script):
    * USE_RSYNC    : (true/false) Use 'rsync' for uploading instead of 'scp'.
 
-   * SILENT       : (true/false) If true, disables all confirmation prompts (auto-approve).
+   * SILENT       : (true/false) If true, disables all overwrite confirmation prompts (auto-approve).
+   * PROPERTIES_FILE   : Copies the folder contents or files corresponding to the keys in the properties file
+       to the remote directories specified by the values.
+   * ASSETS_ROOT       : The base directory where the relative paths (keys) from PROPERTIES_FILE are located.
 
- Global Env:
-   * ROOT : The absolute path of scripts directory.
-
+ Global Environment Variables:
+   * ROOT : The absolute path of the scripts directory.
 ## [scripts/execr.sh](./scripts/execr.sh)
 ![](./docs/assets/scripts/execr.svg)  
  This script executes a local bash file on the remote server without copying it.
  The first parameter of this Bash script is a local Bash file, which will be
  executed directly on the remote server. The working path defaults to the user home.
 
+ Note: This script uses your provided credentials to switch to the **root** user in order to
+ execute commands with **sudo** privileges.
+
  Prerequisites:
-   1. Create your custom bash file for remote execution (e.g. ./AAA/assets/example-bash.sh).
-   2. Configure variables in `scripts/AAA/config/server.sh`:
+   1. Configure variables in `scripts/AAA/config/server.sh`:
         - REMOTE_HOST
         - REMOTE_USER
         - REMOTE_SSH_PORT (default: 22)
         - REMOTE_PWD
 
+ Examples (run directly for easy start, using default settings):
+   * ./scripts/execr.sh ./scripts/AAA/assets/example-bash.sh
+
+      Execute the bash file `./scripts/AAA/assets/example-bash.sh` on your remote server.
+
  Usage:
    * ./scripts/exec.sh <local-bash-file-path>
 
- Example (with default options defined in this script):
-   * ./scripts/execr.sh ./scripts/AAA/assets/example-bash.sh
+ Script Options (variables in this script):
+   * USE_RSYNC    : (true/false) Use 'rsync' for uploading instead of 'scp'.
+
+   * SILENT       : (true/false) If true, disables all confirmation prompts (auto-approve).
+   * LOCAL_BASH_FILE       : Local bash file to execute
+   * REMOTE_TMP_BASH_FILE  : The local bash script will be uploaded to this path on the remote server.
 
  Global Env:
    * ROOT : The absolute path of scripts directory.
@@ -85,6 +102,30 @@
  Steps (in recover mode):
    1. Overwrite the current remote file (`REMOTE_FILE`) with the backup (`REMOTE_BACKUP_FILE`).
 
+ Prerequisites:
+   1. Configure variables in `scripts/AAA/config/server.sh`:
+        - REMOTE_HOST
+        - REMOTE_USER
+        - REMOTE_SSH_PORT (default: 22)
+        - REMOTE_PWD
+   2. Create a file `~/example-patch-remote.txt` on your remote server for testing purposes.
+
+ Examples (run directly for easy start, using default settings):
+   * ./scripts/patchr.sh
+
+        Patch remote file `~/example-patch-remote.txt` with the local file `scripts/AAA/assets/example-patch.txt`
+   * ./scripts/patchr.sh recover
+
+        Recover from backup
+
+ Usage:
+   * ./scripts/patchr.sh
+
+        Patch remote file
+   * ./scripts/patchr.sh recover
+
+        Recover from backup
+
  Script Options (variables inside this script):
    * LOCAL_FILE         : Path to the local file that will be uploaded.
    * REMOTE_UPLOAD_FILE : Remote file path where the local file will be uploaded.
@@ -93,20 +134,47 @@
    * USE_RSYNC          : (true/false) If true, use 'rsync' for uploading; otherwise use 'scp'.
    * SILENT             : (true/false) If true, suppresses all confirmation prompts (auto-approve).
 
- Prerequisites:
+ Global Env:
+   * ROOT : The absolute path of scripts directory.
+# Environment Configuration Helper
+## Docker and Docker Compose
+Instructions to install and configure Docker and Docker Compose on your system.
+
+Prerequisites:
    1. Configure variables in `scripts/AAA/config/server.sh`:
         - REMOTE_HOST
         - REMOTE_USER
         - REMOTE_SSH_PORT (default: 22)
         - REMOTE_PWD
 
- Usage:
-   * ./scripts/patchr.sh            # Patch remote file
-   * ./scripts/patchr.sh recover    # Recover from backup
+Commands: 
+* `./scripts/execr.sh ./scripts/docker/install.sh`
+  
+  * Install Docker and Docker Compose.
+    
+    Example Success Output:
+    ```
+    ...
+    [INFO] Docker installed successfully: Docker version 28.3.2, build 578ccf6
+    ...
+    [INFO] Docker Compose installed successfully: Docker Compose version v2.38.2
+    [INFO] Installation complete.
+    ```
+## AWS LocalStack
+A fully functional local AWS cloud stack for testing and development.
 
- Example (with default options defined in this script):
-   * ./scripts/patchr.sh            # Patch remote file
-   * ./scripts/patchr.sh recover    # Recover from backup
+Prerequisites:
+   1. Configure variables in `scripts/AAA/config/server.sh`:
+        - REMOTE_HOST
+        - REMOTE_USER
+        - REMOTE_SSH_PORT (default: 22)
+        - REMOTE_PWD
+   2. **Docker** and **Docker Compose** have been installed (see [Docker and Docker Compose](#docker-and-docker-compose)).
 
- Global Env:
-   * ROOT : The absolute path of scripts directory.
+Commands: 
+* `./scripts/cpfiles.sh ./scripts/aws/env.sh`
+  * Copy required files to the remote server.
+* `./scripts/execr.sh ./scripts/aws/localstack-start.sh`
+  * Start LocalStack Service.
+* `./scripts/execr.sh ./scripts/aws/localstack-stop.sh`
+  * Stop LocalStack Service.
