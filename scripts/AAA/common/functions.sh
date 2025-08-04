@@ -64,10 +64,17 @@ trust_host() {
   local known_hosts_file="$ssh_dir/known_hosts"
   local search_entry
 
-  # Check ~/.ssh directory
+  # echo "[DEBUG] HOME=$HOME, SSH_DIR=$ssh_dir"
   if [ ! -d "$ssh_dir" ]; then
-    echo "[INFO] ~/.ssh does not exist. Skipping trust setup for $REMOTE_HOST."
-    return
+    echo "[INFO] ~/.ssh does not exist. Creating directory."
+    mkdir -p "$ssh_dir"
+    chmod 700 "$ssh_dir"
+  fi
+
+  if [ ! -f "$known_hosts_file" ]; then
+    echo "[INFO] ~/.ssh/known_hosts file does not exist. Creating it."
+    touch "$known_hosts_file"
+    chmod 600 "$known_hosts_file"
   fi
 
   # Determine search_entry format for known_hosts
@@ -120,7 +127,7 @@ ask() {
 }
 
 remote_execute() {
-  sshpass -p "$REMOTE_PWD" ssh -p "$REMOTE_SSH_PORT" "$REMOTE_USER@$REMOTE_HOST" "$1"
+  sshpass -p "$REMOTE_PWD" ssh -q -p "$REMOTE_SSH_PORT" "$REMOTE_USER@$REMOTE_HOST" "$1"
 }
 
 check_sshpass_installed() {
@@ -129,7 +136,7 @@ check_sshpass_installed() {
     exit 2
   fi
 
-  if ! sshpass -p "$REMOTE_PWD" ssh -p "$REMOTE_SSH_PORT" "$REMOTE_USER@$REMOTE_HOST" "command -v sshpass >/dev/null 2>&1"; then
+  if ! remote_execute "command -v sshpass >/dev/null 2>&1"; then
     echo "[ERROR] sshpass is NOT installed on remote server $REMOTE_USER@$REMOTE_HOST."
     exit 2
   fi

@@ -63,9 +63,9 @@ upload_file_or_dir_to_dir() {
       fi
 
       if [[ "$use_rsync" == true ]]; then
-        sshpass -p "$REMOTE_PWD" rsync -avz -e "ssh -p $REMOTE_SSH_PORT" "$item" "$REMOTE_USER@$REMOTE_HOST:$absolute_remote_dir"
+        upload_file_rsync "$item" "$absolute_remote_dir"
       else
-        sshpass -p "$REMOTE_PWD" scp -r -P "$REMOTE_SSH_PORT" "$item" "$REMOTE_USER@$REMOTE_HOST:$absolute_remote_dir"
+        upload_file_scp "$item" "$absolute_remote_dir"
       fi
 
       if [[ $? -ne 0 ]]; then
@@ -86,9 +86,9 @@ upload_file_or_dir_to_dir() {
 
     echo "[INFO] Uploading file '$source' to '$remote_dir' ..."
     if [[ "$use_rsync" == true ]]; then
-      sshpass -p "$REMOTE_PWD" rsync -avz -e "ssh -p $REMOTE_SSH_PORT" "$source" "$REMOTE_USER@$REMOTE_HOST:$absolute_remote_dir"
+      upload_file_rsync "$source" "$absolute_remote_dir"
     else
-      sshpass -p "$REMOTE_PWD" scp -P "$REMOTE_SSH_PORT" "$source" "$REMOTE_USER@$REMOTE_HOST:$absolute_remote_dir"
+      upload_file_scp "$source" "$absolute_remote_dir"
     fi
 
     if [[ $? -ne 0 ]]; then
@@ -104,6 +104,17 @@ upload_file_or_dir_to_dir() {
   fi
 }
 
+upload_file_rsync(){
+  local source="$1"
+  local absolute_remote_dir="$2"
+  sshpass -p "$REMOTE_PWD" rsync -avz -e "ssh -q -p $REMOTE_SSH_PORT" "$source" "$REMOTE_USER@$REMOTE_HOST:$absolute_remote_dir"
+}
+
+upload_file_scp(){
+  local source="$1"
+  local absolute_remote_dir="$2"
+  sshpass -p "$REMOTE_PWD" scp -P "$REMOTE_SSH_PORT" "$source" "$REMOTE_USER@$REMOTE_HOST:$absolute_remote_dir"
+}
 
 upload_file_to_file() {
   local local_file="$1"
@@ -132,9 +143,9 @@ upload_file_to_file() {
 
   echo "[INFO] Uploading file '$local_file' to remote '$remote_file' ..."
   if [[ "$use_rsync" == true ]]; then
-    sshpass -p "$REMOTE_PWD" rsync -avz -e "ssh -p $REMOTE_SSH_PORT" "$local_file" "$REMOTE_USER@$REMOTE_HOST:$absolute_remote_file"
+    upload_file_rsync "$local_file" "$absolute_remote_file"
   else
-    sshpass -p "$REMOTE_PWD" scp -P "$REMOTE_SSH_PORT" "$local_file" "$REMOTE_USER@$REMOTE_HOST:$absolute_remote_file"
+    upload_file_scp "$local_file" "$absolute_remote_file"
   fi
 
   if [[ $? -ne 0 ]]; then

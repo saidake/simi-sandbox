@@ -21,7 +21,8 @@
 # execute commands with **sudo** privileges.
 #
 # Prerequisites:
-#   1. Configure variables in `scripts/AAA/config/server.sh`:
+#   1. `sshpass` is installed on both local and the remote servers.
+#   2. Configure variables in `scripts/AAA/config/server.sh`:
 #        - REMOTE_HOST
 #        - REMOTE_USER
 #        - REMOTE_SSH_PORT (default: 22)
@@ -54,11 +55,6 @@ source "$(dirname "${BASH_SOURCE[0]}")/AAA/config/global.sh"
 # ================================================================== Required Configurations
 # Import global environment variables
 source "$ROOT/AAA/config/server.sh"
-# Example (in server.sh):
-# REMOTE_HOST='192.168.127.131'
-# REMOTE_SSH_PORT='22'
-# REMOTE_USER='test99'
-# REMOTE_PWD='testpwd'
 
 # ================================================================== Default Configurations
 LOCAL_BASH_FILE="$1"     # Local bash file to execute
@@ -69,7 +65,9 @@ USE_RSYNC=false
 # ================================================================== Validate Input
 source "$ROOT/AAA/common/functions.sh"
 source "$ROOT/AAA/common/upload.sh"
+check_ssh_connection
 trust_host
+check_sshpass_installed
 
 if [[ -z "$LOCAL_BASH_FILE" ]]; then
   echo "[ERROR] No bash script file provided. Please pass the script file path as an argument."
@@ -97,4 +95,4 @@ echo "[INFO] Executing '$LOCAL_BASH_FILE' on remote host $REMOTE_USER@$REMOTE_HO
 #remote_execute "cd $REMOTE_WORK_PATH && echo \"$REMOTE_PWD\" | sudo -S bash -l -s" < "$LOCAL_BASH_FILE"
 upload_file_to_file "$LOCAL_BASH_FILE" "$REMOTE_TMP_BASH_FILE" $USE_RSYNC $SILENT
 #remote_execute "echo \"$REMOTE_PWD\" | sudo -S bash $REMOTE_TMP_BASH_FILE && rm -f $REMOTE_TMP_BASH_FILE"
-remote_execute "echo \"$REMOTE_PWD\" | sudo -S bash -c 'echo; echo \"[INFO] Start Execution\"; bash \"$REMOTE_TMP_BASH_FILE\"; rm -f \"$REMOTE_TMP_BASH_FILE\"'"
+remote_execute "echo \"$REMOTE_PWD\" | sudo -S bash -c 'echo; echo \"[INFO] Remote execution output: \"; bash \"$REMOTE_TMP_BASH_FILE\"; rm -f \"$REMOTE_TMP_BASH_FILE\"'"
