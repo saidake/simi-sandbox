@@ -26,17 +26,18 @@
 #   1. Overwrite the current remote file (`REMOTE_FILE`) with the backup (`REMOTE_BACKUP_FILE`).
 #
 # Prerequisites:
-#   1. Configure variables in `scripts/AAA/config/server.sh`:
+#   1. `sshpass` is installed on both local and the remote servers.
+#   2. Configure variables in `scripts/AAA/config/server.sh`:
 #        - REMOTE_HOST
 #        - REMOTE_USER
 #        - REMOTE_SSH_PORT (default: 22)
 #        - REMOTE_PWD
-#   2. Create a file `~/example-patch-remote.txt` on your remote server for testing purposes.
+#   3. Create a file `~/examples/example-patch-remote.txt` on your remote server for testing purposes.
 #
 # Examples (run directly for easy start, using default settings):
 #   * ./scripts/patchr.sh
 #
-#        Patch remote file `~/example-patch-remote.txt` with the local file `scripts/AAA/assets/example-patch.txt`
+#        Patch remote file `~/examples/example-patch-remote.txt` with the local file `scripts/AAA/assets/example-patch.txt`
 #   * ./scripts/patchr.sh recover
 #
 #        Recover from backup
@@ -69,18 +70,13 @@ source "$(dirname "${BASH_SOURCE[0]}")/AAA/config/global.sh"
 
 # ================================================================== Required Configurations
 source "$ROOT/AAA/config/server.sh"
-# Example (in server.sh):
-# REMOTE_HOST='192.168.127.131'
-# REMOTE_SSH_PORT='22'
-# REMOTE_USER='test99'
-# REMOTE_PWD='testpwd'
 
 # Upload the LOCAL_FILE to the REMOTE_UPLOAD_FILE
 LOCAL_FILE="$ROOT/AAA/assets/example-patch.txt"
 REMOTE_UPLOAD_FILE='~/tmp/example-patch.txt.upload'
 
 # Copy the REMOTE_FILE to REMOTE_BACKUP_FILE before overwriting
-REMOTE_FILE='~/example-patch-remote.txt'
+REMOTE_FILE='~/examples/example-patch-remote.txt'
 REMOTE_BACKUP_FILE='~/tmp/example-patch-remote.txt.bak'
 
 # ================================================================== Optional Configurations
@@ -93,7 +89,10 @@ source "$ROOT/AAA/common/upload.sh"
 set -e
 
 # ================================================================== Logic
+check_ssh_connection
 trust_host
+check_sshpass_installed
+
 resolved_remote_upload_file=$(resolve_remote_path "$REMOTE_UPLOAD_FILE")
 resolved_remote_file=$(resolve_remote_path "$REMOTE_FILE")
 # ================================================================== Recovery Mode
@@ -119,7 +118,7 @@ upload_file_to_file "$LOCAL_FILE" "$resolved_remote_upload_file" $USE_RSYNC $SIL
 echo
 echo "Upload completed. Printing uploaded file info:"
 remote_execute "ls -al $REMOTE_UPLOAD_FILE"
-ask $SILENT "Is the local file successfully uploaded? (y/n): "
+#ask $SILENT "Is the local file successfully uploaded? (y/n): "
 echo
 
 # ================================================================== 2. Backup File
@@ -137,7 +136,7 @@ remote_execute "cp $REMOTE_FILE $REMOTE_BACKUP_FILE -f"
 echo
 echo "Backup completed. Printing backup file info:"
 remote_execute "ls -al $REMOTE_BACKUP_FILE"
-ask $SILENT "Is the backup file created successfully? (y/n): "
+# ask $SILENT "Is the backup file created successfully? (y/n): "
 echo
 
 # ================================================================== 3. Overwrite File

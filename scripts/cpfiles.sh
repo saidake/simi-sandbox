@@ -20,12 +20,13 @@
 # Server credentials are defined in `scripts/AAA/config/server.sh`, and each entry maps
 # to a target directory on the remote server.
 #
-# Overwrite operations prompt for confirmation to ensure safety, unless SILENT=true is set.
+# Overwrite operations prompt for confirmation to ensure safety, unless `SILENT=true` is set.
 #
 # Transfers use SCP or rsync securely, with optional overwrite of existing remote files/dirs.
 #
 # Prerequisites:
-#   1. Configure server variables in `scripts/AAA/config/server.sh`:
+#   1. `sshpass` is installed on both local and the remote servers.
+#   2. Configure server variables in `scripts/AAA/config/server.sh`:
 #        - REMOTE_HOST
 #        - REMOTE_USER
 #        - REMOTE_SSH_PORT (default: 22)
@@ -34,9 +35,13 @@
 # Examples (run directly for easy start, using default settings):
 #   * ./scripts/cpfiles.sh
 #
-#       Copies `example1.txt` to the test server’s home directory (~),
+#       Copies `example1.txt` to the remote directory `~/examples`,
 #       and copies `example2.txt` and `example3.txt` from `scripts/AAA/assets/exampledir` to the remote directory
-#       `targetdir` on the test server.
+#       `~/examples/targetdir` on the test server.
+#   * ./scripts/cpfiles.sh ./scripts/AAA/assets/example-env.sh
+#
+#       Use the specified env configuration to copy `example2.txt` and `example3.txt` from `scripts/AAA/assets/exampledir` to the remote directory
+#       `~/examples/targetdir2` on the test server.
 #
 # Usage:
 #   * ./scripts/cpfiles.sh [<env.sh>]
@@ -44,7 +49,7 @@
 #      You can define script options in a specified `env.sh` to override the default options in this script.
 #
 # Script Options (variables in this script):
-#   * USE_RSYNC    : (true/false) Use 'rsync' for uploading instead of 'scp'.
+#   * USE_RSYNC    : (true/false) Use `rsync` for uploading instead of `scp`.
 #
 #   * SILENT       : (true/false) If true, disables all overwrite confirmation prompts (auto-approve).
 #   * PROPERTIES_FILE   : Copies the folder contents or files corresponding to the keys in the properties file
@@ -63,12 +68,6 @@ source "$(dirname "${BASH_SOURCE[0]}")/AAA/config/global.sh"
 # ================================================================== Required Configurations
 # Import global environment variables
 source "$ROOT/AAA/config/server.sh"
-# Example (in server.sh):
-# REMOTE_HOST='192.168.127.131'
-# REMOTE_SSH_PORT='22'
-# REMOTE_USER='test99'
-# REMOTE_PWD='testpwd'
-
 # ================================================================== Default Configurations
 # Use 'rsync' instead of 'scp'
 USE_RSYNC=false
@@ -94,7 +93,8 @@ fi
 
 source "$ROOT/AAA/common/functions.sh"
 source "$ROOT/AAA/common/property_transfer.sh"
-
 # ================================================================== Logic
+check_ssh_connection
 trust_host
+check_sshpass_installed
 upload_files_by_properties "$PROPERTIES_FILE" "$ASSETS_ROOT" $USE_RSYNC $SILENT

@@ -51,33 +51,54 @@ check_required_env_vars \
   REMOTE_USER \
   REMOTE_PWD
 
+check_ssh_connection(){
+  # Check if port is open
+  if ! timeout 5 bash -c "cat < /dev/null > /dev/tcp/$REMOTE_HOST/$REMOTE_SSH_PORT" 2>/dev/null; then
+    echo "[ERROR] Cannot connect to $REMOTE_HOST on port $REMOTE_SSH_PORT. Aborting script."
+    exit 3
+  fi
+}
+
 trust_host() {
   local ssh_dir="$HOME/.ssh"
   local known_hosts_file="$ssh_dir/known_hosts"
   local search_entry
 
-  # Do nothing if ~/.ssh does not exist
+  # echo "[DEBUG] HOME=$HOME, SSH_DIR=$ssh_dir"
   if [ ! -d "$ssh_dir" ]; then
-    echo "[INFO] ~/.ssh does not exist. Skipping trust setup for $REMOTE_HOST."
-    return
+    echo "[INFO] ~/.ssh does not exist. Creating directory."
+    mkdir -p "$ssh_dir"
+    chmod 700 "$ssh_dir"
   fi
 
+  if [ ! -f "$known_hosts_file" ]; then
+    echo "[INFO] ~/.ssh/known_hosts file does not exist. Creating it."
+    touch "$known_hosts_file"
+    chmod 600 "$known_hosts_file"
+  fi
+
+  # Determine search_entry format for known_hosts
   if [[ "$REMOTE_SSH_PORT" == "22" ]]; then
     search_entry="$REMOTE_HOST"
   else
     search_entry="[$REMOTE_HOST]:$REMOTE_SSH_PORT"
   fi
 
+  # Check if already trusted
   if grep -qF "$search_entry" "$known_hosts_file" 2>/dev/null; then
     echo "[INFO] Host $search_entry already trusted, skipping."
-  else
-    echo "[INFO] Trusting $search_entry ..."
-    ssh-keygen -R "$search_entry" > /dev/null 2>&1 || true
-    ssh-keyscan -p "$REMOTE_SSH_PORT" "$REMOTE_HOST" >> "$known_hosts_file" 2>/dev/null || {
-      echo "[WARN] ssh-keyscan failed for $search_entry"
-    }
+    return
+  fi
+
+
+  echo "[INFO] Trusting $search_entry ..."
+  ssh-keygen -R "$search_entry" > /dev/null 2>&1 || true
+  if ! ssh-keyscan -p "$REMOTE_SSH_PORT" "$REMOTE_HOST" >> "$known_hosts_file" 2>/dev/null; then
+    echo "[ERROR] ssh-keyscan failed for $search_entry $known_hosts_file"
+    exit 2
   fi
 }
+
 
 
 # Choice function to interact with the user
@@ -106,7 +127,19 @@ ask() {
 }
 
 remote_execute() {
-  sshpass -p "$REMOTE_PWD" ssh -p "$REMOTE_SSH_PORT" "$REMOTE_USER@$REMOTE_HOST" "$1"
+  sshpass -p "$REMOTE_PWD" ssh -q -p "$REMOTE_SSH_PORT" "$REMOTE_USER@$REMOTE_HOST" "$1"
+}
+
+check_sshpass_installed() {
+  if ! command -v sshpass >/dev/null 2>&1; then
+    echo "[ERROR] sshpass is NOT installed on local machine."
+    exit 2
+  fi
+
+  if ! remote_execute "command -v sshpass >/dev/null 2>&1"; then
+    echo "[ERROR] sshpass is NOT installed on remote server $REMOTE_USER@$REMOTE_HOST."
+    exit 2
+  fi
 }
 
 resolve_remote_path() {
