@@ -7,12 +7,16 @@
   - [scripts/patchr.sh](#scriptspatchrsh)
 - [Environment Configuration Helper](#environment-configuration-helper)
   - [Docker and Docker Compose](#docker-and-docker-compose)
+  - [Docker Desktop (Windows)](#docker-desktop-windows)
   - [AWS LocalStack](#aws-localstack)
+  - [MailHog (Windows)](#mailhog-windows)
+  
 # Introduction
 **Simi Sandbox** is a developer-friendly toolkit for remote server management — enabling file transfer, command execution, and automated dependency setup.
 
 # Core Scripts
 ## [scripts/cpfiles.sh](./scripts/cpfiles.sh)
+[Back to Top](#table-of-contents)  
 ![](./docs/assets/scripts/cpfiles.svg)  
 This script automates uploading specific files or directories from `scripts/AAA/assets`
 to a remote server.
@@ -26,7 +30,7 @@ Overwrite operations prompt for confirmation to ensure safety, unless `SILENT=tr
 Transfers use SCP or rsync securely, with optional overwrite of existing remote files/dirs.
 
 Prerequisites:
-  1. `sshpass` is installed on both local and the remote servers.
+  1. `sshpass` is installed locally.
   2. Configure server variables in `scripts/AAA/config/server.sh`:
        - REMOTE_HOST
        - REMOTE_USER
@@ -61,6 +65,7 @@ Global Environment Variables:
   * ROOT : The absolute path of the scripts directory.
 
 ## [scripts/execr.sh](./scripts/execr.sh)
+[Back to Top](#table-of-contents)  
 ![](./docs/assets/scripts/execr.svg)  
 This script executes a local bash file on the remote server without copying it.
 The first parameter of this Bash script is a local Bash file, which will be
@@ -70,7 +75,7 @@ Note: This script uses your provided credentials to switch to the **root** user 
 execute commands with **sudo** privileges.
 
 Prerequisites:
-  1. `sshpass` is installed on both local and the remote servers.
+  1. `sshpass` is installed locally.
   2. Configure variables in `scripts/AAA/config/server.sh`:
        - REMOTE_HOST
        - REMOTE_USER
@@ -96,6 +101,7 @@ Global Env:
   * ROOT : The absolute path of scripts directory.
 
 ## [scripts/patchr.sh](./scripts/patchr.sh)
+[Back to Top](#table-of-contents)  
 ![](./docs/assets/scripts/patchr.svg)  
 This script safely patches a remote file on a server using one of two modes:
   1. Upload a local file and replace a target remote file.
@@ -110,7 +116,7 @@ Steps (in recover mode):
   1. Overwrite the current remote file (`REMOTE_FILE`) with the backup (`REMOTE_BACKUP_FILE`).
 
 Prerequisites:
-  1. `sshpass` is installed on both local and the remote servers.
+  1. `sshpass` is installed locally.
   2. Configure variables in `scripts/AAA/config/server.sh`:
        - REMOTE_HOST
        - REMOTE_USER
@@ -148,8 +154,8 @@ Global Env:
 
 # Environment Configuration Helper
 ## Docker and Docker Compose
+[Back to Top](#table-of-contents)  
 Instructions to install and configure Docker and Docker Compose on your system.
-
 Prerequisites:
    1. Configure variables in `scripts/AAA/config/server.sh`:
         - REMOTE_HOST
@@ -160,8 +166,8 @@ Prerequisites:
 Commands: 
 * `./scripts/execr.sh ./scripts/docker/install.sh`
   
-  * Install Docker and Docker Compose.
-    
+  * Run this command in the current project directory to install Docker and Docker Compose.
+
     Example Success Output:
     ```
     ...
@@ -170,7 +176,16 @@ Commands:
     [INFO] Docker Compose installed successfully: Docker Compose version v2.38.2
     [INFO] Installation complete.
     ```
+## Docker Desktop (Windows)
+[Back to Top](#table-of-contents)   
+Prerequisites:
+   1. Open a Command Prompt with administrative privileges and navigate to the project root directory.
+
+Commands: 
+* `call scripts\docker\install.bat`
+  * Install Docker Desktop.
 ## AWS LocalStack
+[Back to Top](#table-of-contents)  
 A fully functional local AWS cloud stack for testing and development.
 
 Prerequisites:
@@ -179,7 +194,7 @@ Prerequisites:
         - REMOTE_USER
         - REMOTE_SSH_PORT (default: 22)
         - REMOTE_PWD
-   2. **Docker** and **Docker Compose** have been installed (see [Docker and Docker Compose](#docker-and-docker-compose)).
+   2. **Docker** and **Docker Compose** have been installed on the remote server. (see [Docker and Docker Compose](#docker-and-docker-compose)).
 
 Commands: 
 * `./scripts/cpfiles.sh ./scripts/aws/env.sh`
@@ -188,3 +203,11 @@ Commands:
   * Start LocalStack Service.
 * `./scripts/execr.sh ./scripts/aws/localstack-stop.sh`
   * Stop LocalStack Service.
+## MailHog (Windows)
+[Back to Top](#table-of-contents)    
+Prerequisites:
+   1. **Docker Desktop** is installed and running locally. (see [Docker Desktop (Windows)](#docker-desktop-windows)).
+
+Commands: 
+* `call scripts\mailhog\start.bat`
+  * Install and run the MailHog Docker image.

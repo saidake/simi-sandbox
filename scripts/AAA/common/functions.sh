@@ -52,8 +52,7 @@ check_required_env_vars \
   REMOTE_PWD
 
 check_ssh_connection(){
-  # Check if port is open
-  if ! timeout 5 bash -c "cat < /dev/null > /dev/tcp/$REMOTE_HOST/$REMOTE_SSH_PORT" 2>/dev/null; then
+  if ! nc -z -w5 "$REMOTE_HOST" "$REMOTE_SSH_PORT"; then
     echo "[ERROR] Cannot connect to $REMOTE_HOST on port $REMOTE_SSH_PORT. Aborting script."
     exit 3
   fi
@@ -133,11 +132,6 @@ remote_execute() {
 check_sshpass_installed() {
   if ! command -v sshpass >/dev/null 2>&1; then
     echo "[ERROR] sshpass is NOT installed on local machine."
-    exit 2
-  fi
-
-  if ! remote_execute "command -v sshpass >/dev/null 2>&1"; then
-    echo "[ERROR] sshpass is NOT installed on remote server $REMOTE_USER@$REMOTE_HOST."
     exit 2
   fi
 }
