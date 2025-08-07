@@ -22,9 +22,7 @@ REM ****************************************************************************
 @echo off
 setlocal
 
-REM ================================
 REM Function: Ensure Chocolatey is available, install if missing
-REM ================================
 :ensure_chocolatey
     REM Step 1: Check if choco command exists in PATH
     where choco >nul 2>&1
@@ -55,9 +53,7 @@ REM ================================
         exit /b 1
     )
 
-REM ================================
 REM Main script starts here
-REM ================================
 call :ensure_chocolatey
 :choco_done
 

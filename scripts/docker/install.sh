@@ -21,8 +21,24 @@
 
 set -e
 
+echo "[INFO] Checking and syncing system time..."
+if ! command -v ntpdate >/dev/null 2>&1; then
+  sudo apt-get update -y || true
+  sudo apt-get install -y ntpdate
+  echo "[INFO] ntpdate installed successfully."
+fi
+
+if sudo ntpdate -u time.google.com; then
+  echo "[INFO] Time sync successful."
+else
+  echo "[WARN] Time sync failed. Continuing with existing system time."
+fi
+
 echo "[INFO] Updating package index..."
-sudo apt-get update
+if ! sudo apt-get update; then
+  echo "[ERROR] apt-get update failed. Check your network or time settings."
+  exit 1
+fi
 
 echo "[INFO] Installing prerequisites..."
 sudo apt-get install -y ca-certificates curl gnupg lsb-release

@@ -22,43 +22,25 @@ REM Prerequisites:
 REM    1. **Docker Desktop** is installed and running locally.
 REM ******************************************************************************
 
-echo Checking Docker...
-docker --version >nul 2>&1
+echo [INFO] Checking if MailHog container is running...
+docker ps -a --filter "name=mailhog" --format "{{.Names}}" | findstr /I "mailhog" >nul
+if %errorlevel% neq 0 (
+    echo [INFO] MailHog container is not running.
+    exit /b 0
+)
+
+echo [INFO] Stopping MailHog container...
+docker stop mailhog >nul 2>&1
 if errorlevel 1 (
-    echo [ERROR] Docker is not installed or not in PATH.
+    echo [ERROR] Failed to stop MailHog container.
     exit /b 1
 )
 
-echo Checking for existing MailHog image...
-docker images mailhog/mailhog:latest --format "{{.Repository}}:{{.Tag}}" | findstr /I "mailhog/mailhog:latest" >nul
-if %errorlevel%==0 (
-    echo [INFO] Existing MailHog container found. Removing...
-    docker rm -f mailhog >nul 2>&1
-) else (
-    echo [INFO] Pulling MailHog image...
-    docker pull mailhog/mailhog:latest
-    if errorlevel 1 (
-        echo [ERROR] Failed to pull MailHog image.
-        exit /b 1
-    )
-)
-
-echo Starting MailHog container...
-docker run -d ^
-    --name mailhog ^
-    -p 1025:1025 ^
-    -p 8025:8025 ^
-    mailhog/mailhog
-REM SMTP port： 1025
-REM Web UI port： 8025
-
+echo [INFO] Removing MailHog container...
+docker rm mailhog >nul 2>&1
 if errorlevel 1 (
-    echo [ERROR] Failed to start MailHog container.
+    echo [ERROR] Failed to remove MailHog container.
     exit /b 1
 )
 
-echo.
-echo MailHog is running!
-echo SMTP server: localhost:1025
-echo Web UI: http://localhost:8025
-echo Use SMTP server in your app to test sending emails.
+echo [INFO] MailHog container stopped and removed successfully.
