@@ -99,13 +99,14 @@ resolved_remote_file=$(resolve_remote_path "$REMOTE_FILE")
 if [ "$1" == "recover" ]; then
   ask $SILENT "Do you want to restore the remote file '$REMOTE_FILE' from the backup file '$REMOTE_BACKUP_FILE'? (y/n): "
   remote_execute "cp $REMOTE_BACKUP_FILE $REMOTE_FILE -f"
-  echo "[INFO] Recovery completed."
+  echo "[INFO] Recovery completed. Remote file info:"
+  remote_execute "ls -al $REMOTE_FILE"
   exit 0
 fi
 
 # ================================================================== 1. Upload File
 echo "==================================== Upload the local file"
-echo "Local file info:"
+echo "[INFO] Local file info:"
 ls -al "$LOCAL_FILE"
 
 if remote_execute "[ -f \"$REMOTE_UPLOAD_FILE\" ]"; then
@@ -116,7 +117,7 @@ fi
 
 upload_file_to_file "$LOCAL_FILE" "$resolved_remote_upload_file" $USE_RSYNC $SILENT
 echo
-echo "Upload completed. Printing uploaded file info:"
+echo "[INFO] Upload completed. Printing uploaded file info:"
 remote_execute "ls -al $REMOTE_UPLOAD_FILE"
 #ask $SILENT "Is the local file successfully uploaded? (y/n): "
 echo
@@ -124,17 +125,16 @@ echo
 # ================================================================== 2. Backup File
 echo "==================================== Backup the server file"
 if ! remote_execute "[ -f \"$resolved_remote_file\" ]"; then
-  echo "[ERROR] Remote file does not exist: $REMOTE_FILE"
-  echo "Aborting script."
+  echo "[ERROR] Remote file does not exist: $REMOTE_FILE, Aborting script."
   exit 1
 fi
 
-echo "Remote file info before backup:"
+echo "[INFO] Remote file info before backup:"
 remote_execute "ls -al $REMOTE_FILE"
 ask $SILENT "Do you want to back up the remote file '$REMOTE_FILE' to '$REMOTE_BACKUP_FILE'? (y/n): "
 remote_execute "cp $REMOTE_FILE $REMOTE_BACKUP_FILE -f"
 echo
-echo "Backup completed. Printing backup file info:"
+echo "[INFO] Backup completed. Printing backup file info:"
 remote_execute "ls -al $REMOTE_BACKUP_FILE"
 # ask $SILENT "Is the backup file created successfully? (y/n): "
 echo
@@ -145,5 +145,5 @@ remote_execute "ls -al $REMOTE_UPLOAD_FILE"
 ask $SILENT "Do you want to overwrite the remote file '$REMOTE_FILE' with the uploaded file '$REMOTE_UPLOAD_FILE'? (y/n): "
 remote_execute "cp $REMOTE_UPLOAD_FILE $REMOTE_FILE -f"
 echo
-echo "Overwrite completed. Final file info:"
+echo "[INFO] Overwrite completed. Final file info:"
 remote_execute "ls -al $REMOTE_FILE"
