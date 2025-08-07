@@ -26,7 +26,7 @@
 #   1. Overwrite the current remote file (`REMOTE_FILE`) with the backup (`REMOTE_BACKUP_FILE`).
 #
 # Prerequisites:
-#   1. `sshpass` is installed on both local and the remote servers.
+#   1. `sshpass` is installed locally.
 #   2. Configure variables in `scripts/AAA/config/server.sh`:
 #        - REMOTE_HOST
 #        - REMOTE_USER

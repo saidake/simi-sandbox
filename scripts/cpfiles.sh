@@ -25,7 +25,7 @@
 # Transfers use SCP or rsync securely, with optional overwrite of existing remote files/dirs.
 #
 # Prerequisites:
-#   1. `sshpass` is installed on both local and the remote servers.
+#   1. `sshpass` is installed locally.
 #   2. Configure server variables in `scripts/AAA/config/server.sh`:
 #        - REMOTE_HOST
 #        - REMOTE_USER

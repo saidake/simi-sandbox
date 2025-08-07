@@ -30,7 +30,7 @@ Overwrite operations prompt for confirmation to ensure safety, unless `SILENT=tr
 Transfers use SCP or rsync securely, with optional overwrite of existing remote files/dirs.
 
 Prerequisites:
-  1. `sshpass` is installed on both local and the remote servers.
+  1. `sshpass` is installed locally.
   2. Configure server variables in `scripts/AAA/config/server.sh`:
        - REMOTE_HOST
        - REMOTE_USER
@@ -75,7 +75,7 @@ Note: This script uses your provided credentials to switch to the **root** user 
 execute commands with **sudo** privileges.
 
 Prerequisites:
-  1. `sshpass` is installed on both local and the remote servers.
+  1. `sshpass` is installed locally.
   2. Configure variables in `scripts/AAA/config/server.sh`:
        - REMOTE_HOST
        - REMOTE_USER
@@ -116,7 +116,7 @@ Steps (in recover mode):
   1. Overwrite the current remote file (`REMOTE_FILE`) with the backup (`REMOTE_BACKUP_FILE`).
 
 Prerequisites:
-  1. `sshpass` is installed on both local and the remote servers.
+  1. `sshpass` is installed locally.
   2. Configure variables in `scripts/AAA/config/server.sh`:
        - REMOTE_HOST
        - REMOTE_USER
@@ -179,7 +179,7 @@ Commands:
 ## Docker Desktop (Windows)
 [Back to Top](#table-of-contents)   
 Prerequisites:
-   1. Open a Command Prompt with administrative privileges.
+   1. Open a Command Prompt with administrative privileges and navigate to the project root directory.
 
 Commands: 
 * `call scripts\docker\install.bat`
