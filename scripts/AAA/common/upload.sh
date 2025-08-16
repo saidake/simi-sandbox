@@ -24,19 +24,59 @@ _UPLOAD_SH_INCLUDED=1
 
 source "$ROOT/AAA/common/functions.sh"
 
+upload_file_to_dir() {
+  local source="$1"
+  local absolute_remote_dir="$2"
+  local filename
+  filename=$(basename "$source")
+  local random_suffix
+  random_suffix=$(date +%s%N | sha256sum | head -c 8)
+  local temp_path="/tmp/sandbox/${filename}.${random_suffix}"
+
+  if [ "$USE_SUDO" = true ]; then
+    # echo "[DEBUG] source: $source" | cat -A
+    # echo "[DEBUG] temp_path: $temp_path" | cat -A
+
+    if ! remote_execute "[ -d /tmp/sandbox ]"; then
+      echo "[INFO] Creating temp directory '/tmp/sandbox' on remote host..."
+      remote_execute "mkdir -p /tmp/sandbox && chmod 777 /tmp/sandbox"
+    fi
+
+    echo "[INFO] Uploading to temp path before sudo move..."
+    if [ "$USE_RSYNC" = true ]; then
+      sshpass -p "$REMOTE_PWD" rsync -avz -e "ssh -q -p $REMOTE_SSH_PORT" "$source" "$REMOTE_USER@$REMOTE_HOST:$temp_path"
+    else
+      sshpass -p "$REMOTE_PWD" scp -P "$REMOTE_SSH_PORT" "$source" "$REMOTE_USER@$REMOTE_HOST:$temp_path"
+    fi
+
+    remote_execute "mv '$temp_path' '${absolute_remote_dir}/${filename}'"
+
+  else
+    if [ "$USE_RSYNC" = true ]; then
+      sshpass -p "$REMOTE_PWD" rsync -avz -e "ssh -q -p $REMOTE_SSH_PORT" "$source" "$REMOTE_USER@$REMOTE_HOST:$absolute_remote_dir"
+    else
+      sshpass -p "$REMOTE_PWD" scp -P "$REMOTE_SSH_PORT" "$source" "$REMOTE_USER@$REMOTE_HOST:$absolute_remote_dir"
+    fi
+  fi
+
+  echo "[INFO] Upload complete."
+}
+
+
 upload_file_or_dir_to_dir() {
   local source="$1"
   local remote_dir="$2"
   local use_rsync="$3"
   local silent="$4"
 
+  # echo "upload_file_or_dir_to_dir source: $source" | cat -A
   absolute_remote_dir=$(resolve_remote_path "$remote_dir")
+  # echo "[DEBUG] upload_file_or_dir_to_dir - absolute_remote_dir: $absolute_remote_dir" | cat -A
 
   if [[ ! -e "$source" ]]; then
     echo "[ERROR] Source '$source' does not exist." >&2
     exit 1
   fi
-
   if remote_file_exists "$absolute_remote_dir"; then
     echo "[ERROR] Remote path '$remote_dir' is a file, not a directory." >&2
     exit 1
@@ -58,15 +98,11 @@ upload_file_or_dir_to_dir() {
       local base_item
       base_item=$(basename "$item")
 
-      if remote_execute "[[ -e \"$absolute_remote_dir/$base_item\" ]]"; then
+      if remote_file_or_dir_exists "$absolute_remote_dir/$base_item"; then
         ask "$silent" "[WARN] '$base_item' already exists in '$remote_dir'. Overwrite? (y/n): "
       fi
 
-      if [[ "$use_rsync" == true ]]; then
-        upload_file_rsync "$item" "$absolute_remote_dir"
-      else
-        upload_file_scp "$item" "$absolute_remote_dir"
-      fi
+      upload_file_to_dir "$item" "$absolute_remote_dir"
 
       if [[ $? -ne 0 ]]; then
         echo "[ERROR] Failed to upload '$item' to '$remote_dir'." >&2
@@ -80,16 +116,11 @@ upload_file_or_dir_to_dir() {
     local base_file
     base_file=$(basename "$source")
 
-    if remote_execute "[[ -e \"$absolute_remote_dir/$base_file\" ]]"; then
+    echo "[INFO] Uploading file '$source' to '$remote_dir' ..."
+    if remote_file_or_dir_exists "$absolute_remote_dir/$base_file"; then
       ask "$silent" "[WARN] '$base_file' already exists in '$remote_dir'. Overwrite? (y/n): "
     fi
-
-    echo "[INFO] Uploading file '$source' to '$remote_dir' ..."
-    if [[ "$use_rsync" == true ]]; then
-      upload_file_rsync "$source" "$absolute_remote_dir"
-    else
-      upload_file_scp "$source" "$absolute_remote_dir"
-    fi
+    upload_file_to_dir "$source" "$absolute_remote_dir"
 
     if [[ $? -ne 0 ]]; then
       echo "[ERROR] Failed to upload '$source' to '$remote_dir'." >&2
@@ -104,17 +135,7 @@ upload_file_or_dir_to_dir() {
   fi
 }
 
-upload_file_rsync(){
-  local source="$1"
-  local absolute_remote_dir="$2"
-  sshpass -p "$REMOTE_PWD" rsync -avz -e "ssh -q -p $REMOTE_SSH_PORT" "$source" "$REMOTE_USER@$REMOTE_HOST:$absolute_remote_dir"
-}
 
-upload_file_scp(){
-  local source="$1"
-  local absolute_remote_dir="$2"
-  sshpass -p "$REMOTE_PWD" scp -P "$REMOTE_SSH_PORT" "$source" "$REMOTE_USER@$REMOTE_HOST:$absolute_remote_dir"
-}
 
 upload_file_to_file() {
   local local_file="$1"
@@ -142,11 +163,7 @@ upload_file_to_file() {
   fi
 
   echo "[INFO] Uploading file '$local_file' to remote '$remote_file' ..."
-  if [[ "$use_rsync" == true ]]; then
-    upload_file_rsync "$local_file" "$absolute_remote_file"
-  else
-    upload_file_scp "$local_file" "$absolute_remote_file"
-  fi
+  upload_file_to_dir "$item" "$absolute_remote_dir"
 
   if [[ $? -ne 0 ]]; then
     echo "[ERROR] Failed to upload '$local_file' to '$remote_file'." >&2

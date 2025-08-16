@@ -99,7 +99,6 @@ trust_host() {
 }
 
 
-
 # Choice function to interact with the user
 ask() {
   local silent="$1"
@@ -126,7 +125,17 @@ ask() {
 }
 
 remote_execute() {
-  sshpass -p "$REMOTE_PWD" ssh -q -p "$REMOTE_SSH_PORT" "$REMOTE_USER@$REMOTE_HOST" "$1"
+  # sshpass -p "$REMOTE_PWD" ssh -q -p "$REMOTE_SSH_PORT" "$REMOTE_USER@$REMOTE_HOST" "$1"
+  local REMOTE_CMD="$1"
+  export SSHPASS="$REMOTE_PWD"
+  printf -v ESCAPED_CMD "%q" "$REMOTE_CMD"  
+  if [[ "$USE_SUDO" == true ]]; then
+    sshpass -e ssh -p "$REMOTE_SSH_PORT" "$REMOTE_USER@$REMOTE_HOST" \
+      "echo '$REMOTE_PWD' | sudo -S -p '' bash -c $ESCAPED_CMD"
+  else
+    sshpass -e ssh -p "$REMOTE_SSH_PORT" "$REMOTE_USER@$REMOTE_HOST" \
+      "bash -c $ESCAPED_CMD"
+  fi
 }
 
 check_sshpass_installed() {
@@ -142,9 +151,21 @@ resolve_remote_path() {
 }
 
 remote_dir_exists() {
-  remote_execute "[ -d \"$1\" ]"
+  remote_execute "[ -d '$1' ]"
 }
 
 remote_file_exists() {
-  remote_execute "[ -f \"$1\" ]"
+  remote_execute "[ -f '$1' ]"
+}
+
+remote_file_or_dir_exists() {
+  local filepath="$1"
+  # echo "[DEBUG] remote_file_or_dir_exists - filepath: $filepath" | cat -A
+  if remote_execute "test -e '$filepath'"; then
+    # echo "[DEBUG] remote_file_or_dir_exists - Exists"
+    return 0  # Exists
+  else
+    # echo "[DEBUG] remote_file_or_dir_exists - Not Exists"
+    return 1  # Not exists
+  fi
 }

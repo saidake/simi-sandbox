@@ -1,4 +1,5 @@
 #!/bin/bash
+# ************************************************************************************
 # Copyright 2022-2025 the original author or authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -69,6 +70,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/AAA/config/global.sh"
 # Import global environment variables
 source "$ROOT/AAA/config/server.sh"
 # ================================================================== Default Configurations
+USE_SUDO=false
 # Use 'rsync' instead of 'scp'
 USE_RSYNC=false
 # Ask warning messages
