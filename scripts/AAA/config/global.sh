@@ -23,3 +23,4 @@ _GLOBAL_SH_INCLUDED=1
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 export ROOT
+export SANDBOX_TEMP_DIR="/tmp/sandbox"

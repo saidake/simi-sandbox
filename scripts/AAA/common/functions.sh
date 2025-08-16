@@ -138,6 +138,37 @@ remote_execute() {
   fi
 }
 
+remote_execute_local_script() {
+  local local_script_path="$1"
+  local remote_work_path="${2:-~}"
+  local use_rsync="${3:-false}"
+  local silent="${4:-false}"
+
+  if [[ ! -f "$local_script_path" ]]; then
+    echo "[ERROR] Script '$local_script_path' does not exist."
+    return 1
+  fi
+
+  local rand_suffix
+  rand_suffix=$(date +%s%N | sha256sum | head -c 8)
+  local remote_temp_bash_file="$SANDBOX_TEMP_DIR/temp_exec_${rand_suffix}.sh"
+
+  export SSHPASS="$REMOTE_PWD"
+
+  if [[ "$USE_SUDO" == true ]]; then
+    echo "[INFO] Uploading script to '$remote_temp_bash_file' for sudo execution..."
+    upload_file_to_file "$local_script_path" "$remote_temp_bash_file" "$use_rsync" "$silent"
+    echo "[INFO] Executing script with sudo..."
+    remote_execute "cd $remote_work_path && bash $remote_temp_bash_file"
+    remote_execute "rm -f '$remote_temp_bash_file'"
+  else
+    # echo "[INFO] Executing script directly without sudo..."
+    sshpass -e ssh -p "$REMOTE_SSH_PORT" "$REMOTE_USER@$REMOTE_HOST" \
+      "cd $remote_work_path && bash -l -s" < "$local_script_path"
+  fi
+}
+
+
 check_sshpass_installed() {
   if ! command -v sshpass >/dev/null 2>&1; then
     echo "[ERROR] sshpass is NOT installed on local machine."
