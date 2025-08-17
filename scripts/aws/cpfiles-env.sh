@@ -14,7 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ************************************************************************************
-# Start LocalStack Service.
+# Rely on cpfiles.sh to transfer `scripts/aws/assets/docker-compose.yml` to 
+# `/opt/sandbox/aws` on the remote server.
 #
 # Prerequisites:
 #    1. Configure variables in `scripts/AAA/config/server.sh`:
@@ -28,26 +29,12 @@
 # Since : 1.3.1
 # Date  : July 20, 2025
 # ************************************************************************************
+PROPERTIES_FILE="$ROOT/aws/config/path-mapping.properties"
+# Assets
+ASSETS_ROOT="$ROOT/aws/assets"
 
-COMPOSE_DIR="/opt/sandbox/aws"
-COMPOSE_FILE="$COMPOSE_DIR/docker-compose.yml"
-
-echo "[INFO] Starting LocalStack services using docker-compose..."
-
-if [[ ! -f "$COMPOSE_FILE" ]]; then
-  echo "[ERROR] docker-compose.yml not found at $COMPOSE_FILE"
-  exit 1
-fi
-
-cd "$COMPOSE_DIR" || {
-  echo "[ERROR] Failed to change directory to $COMPOSE_DIR"
-  exit 1
-}
-
-docker-compose up -d localstack
-if [[ $? -eq 0 ]]; then
-  echo "[INFO] LocalStack started successfully."
-else
-  echo "[ERROR] Failed to start LocalStack."
-  exit 1
-fi
+USE_SUDO=true
+# Use 'rsync' instead of 'scp'
+USE_RSYNC=false
+# Ask warning messages
+SILENT=false
