@@ -32,10 +32,10 @@ generate_random_temp_path() {
 }
 
 ensure_remote_temp_dir() {
-  if ! remote_execute "[ -d '$SANDBOX_TEMP_DIR' ]"; then
-    echo "[INFO] Creating temp directory '$SANDBOX_TEMP_DIR' on remote host..."
+  # if ! remote_execute "[ -d '$SANDBOX_TEMP_DIR' ]"; then
+    # echo "[INFO] Creating temp directory '$SANDBOX_TEMP_DIR' on remote host..."
     remote_execute "mkdir -p '$SANDBOX_TEMP_DIR' && chmod 777 '$SANDBOX_TEMP_DIR'"
-  fi
+  # fi
 }
 
 upload_with_tool() {
@@ -51,15 +51,32 @@ upload_with_tool() {
 
 upload_with_sudo_move() {
   local local_path="$1"
-  local final_remote_path="$2"
+  local remote_path="$2"
+  # echo "[DEBUG] upload_with_sudo_move - remote_path: $remote_path" | cat -A
+
+  # Check if the target path is inside the SANDBOX_TEMP_DIR
+  if [[ "$remote_path" == "$SANDBOX_TEMP_DIR"* ]]; then
+    # echo "[INFO] Target is inside SANDBOX_TEMP_DIR, directly uploading to: $remote_path"
+    
+    # Ensure directory exists and is world-writable
+    ensure_remote_temp_dir
+
+    upload_with_tool "$local_path" "$remote_path"
+    return
+  fi
+
+  # If not in temp dir, use intermediate path and mv
   local filename
-  filename=$(basename "$final_remote_path")
+  filename=$(basename "$remote_path")
+
   local temp_path
   temp_path=$(generate_random_temp_path "$filename")
+  # echo "[DEBUG] upload_with_sudo_move - temp_path: $temp_path" | cat -A
 
   ensure_remote_temp_dir
+
   upload_with_tool "$local_path" "$temp_path"
-  remote_execute "mv '$temp_path' '$final_remote_path'"
+  remote_execute "mv '$temp_path' '$remote_path'"
 }
 
 
@@ -110,16 +127,12 @@ upload_file_to_file() {
 
   echo "[INFO] Uploading file '$local_file' to remote path '$remote_file'..."
 
-  local original_USE_RSYNC="$USE_RSYNC"
-  USE_RSYNC="$use_rsync"
 
   if [ "$USE_SUDO" = true ]; then
     upload_with_sudo_move "$local_file" "$absolute_remote_file"
   else
     upload_with_tool "$local_file" "$absolute_remote_file"
   fi
-
-  USE_RSYNC="$original_USE_RSYNC"
 
   echo "[INFO] Successfully uploaded '$local_file' to '$remote_file'."
 }
