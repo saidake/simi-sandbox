@@ -35,9 +35,13 @@
 # 
 #     The first parameter `<local-bash-file-path>` is a local Bash file, which will be
 #     executed directly on the remote server.
+#
 # Script Options (variables in this script):
 #   * USE_RSYNC    : (true/false) Use 'rsync' for uploading instead of 'scp'.
 #   * USE_SUDO     : (true/false) If true, the bash script will be executed with sudo privileges on the remote machine.
+#
+#       In sudo mode, the script is first copied to the remote server before execution.  
+#       In non-sudo mode, it is executed directly on the remote server via SSH.
 #   * SILENT       : (true/false) If true, disables all confirmation prompts (auto-approve).
 #   * LOCAL_BASH_FILE       : Local bash file to execute
 #   * REMOTE_TMP_BASH_FILE  : The local bash script will be uploaded to this path on the remote server.

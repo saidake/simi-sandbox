@@ -22,7 +22,8 @@
 #         - REMOTE_USER
 #         - REMOTE_SSH_PORT (default: 22)
 #         - REMOTE_PWD
-#    2. **Docker** and **Docker Compose** have been installed on the remote server. (see [Docker and Docker Compose](#docker-and-docker-compose)).
+#    2. **Docker** and **Docker Compose** have been installed on the remote server. 
+#        (see [Docker and Docker Compose / Installing on a Remote Linux Host](#installing-on-a-remote-linux-host)).
 #
 # Author: Craig Brown
 # Since : 1.3.1
