@@ -27,11 +27,25 @@ source "$ROOT/AAA/common/upload.sh"
 load_properties() {
     local properties_file="$1"
     local -n _file_mappings="$2"
+
     if [[ ! -f "$properties_file" ]]; then
-        echo "[ERROR] Mapping file not found '$properties_file'"
+        echo "[ERROR] Mapping file not found: '$properties_file'"
         exit 1
     fi
 
+    # Detect and convert Windows line endings (\r\n) to Unix (\n)
+    if grep -q $'\r' "$properties_file"; then
+        echo "[INFO] Windows-style line endings detected. Converting to LF..."
+        sed -i 's/\r$//' "$properties_file"
+    fi
+
+    # Ensure the file ends with a newline (LF)
+    if [[ -n $(tail -c1 "$properties_file") ]]; then
+        echo "[INFO] File missing final newline. Appending LF..."
+        echo >> "$properties_file"
+    fi
+
+    # Parse key-value pairs and trim whitespace
     while IFS='=' read -r local_path target_path; do
         local_path=$(echo "$local_path" | xargs)
         target_path=$(echo "$target_path" | xargs)
@@ -39,18 +53,19 @@ load_properties() {
     done < "$properties_file"
 }
 
+
 upload_files_by_mappings() {
     local assets_root="$1"
     # shellcheck disable=SC2178
     local -n _file_mappings="$2"
     local use_rsync="$3"
     local silent="$4"
-
     echo "[INFO] Starting upload process..."
     for item in "${!_file_mappings[@]}"; do
         local_path="$assets_root/$item"
         remote_dir="${_file_mappings[$item]}"
-
+        #echo "local_path: $local_path"
+        #echo "remote_dir: $remote_dir"
         if [[ -e "$local_path" ]]; then
             upload_file_or_dir_to_dir "$local_path" "$remote_dir" "$use_rsync" "$silent"
         else

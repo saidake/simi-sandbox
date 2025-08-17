@@ -1,4 +1,5 @@
 #!/bin/bash
+# ************************************************************************************
 # Copyright 2022-2025 the original author or authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,26 +28,27 @@
 #
 # Prerequisites:
 #   1. `sshpass` is installed locally.
-#   2. Configure variables in `scripts/AAA/config/server.sh`:
+#   2. Make sure the current bash file has execution privileges: `chmod +x scripts/patchr.sh`
+#   3. Configure variables in `scripts/AAA/config/server.sh`:
 #        - REMOTE_HOST
 #        - REMOTE_USER
 #        - REMOTE_SSH_PORT (default: 22)
 #        - REMOTE_PWD
-#   3. Create a file `~/examples/example-patch-remote.txt` on your remote server for testing purposes.
+#   4. [Optional] Create a file `~/examples/example-patch-remote.txt` on your remote server for testing purposes.
 #
 # Examples (run directly for easy start, using default settings):
-#   * ./scripts/patchr.sh
+#   * `./scripts/patchr.sh`
 #
 #        Patch remote file `~/examples/example-patch-remote.txt` with the local file `scripts/AAA/assets/example-patch.txt`
-#   * ./scripts/patchr.sh recover
+#   * `./scripts/patchr.sh recover`
 #
 #        Recover from backup
 #
 # Usage:
-#   * ./scripts/patchr.sh
+#   * `./scripts/patchr.sh`
 #
 #        Patch remote file
-#   * ./scripts/patchr.sh recover
+#   * `./scripts/patchr.sh recover`
 #
 #        Recover from backup
 #
@@ -58,6 +60,8 @@
 
 #   * USE_RSYNC          : (true/false) If true, use 'rsync' for uploading; otherwise use 'scp'.
 #   * SILENT             : (true/false) If true, suppresses all confirmation prompts (auto-approve).
+#   * USE_SUDO           : (true/false) If true, these commands will be executed with sudo privileges on the remote machine.  
+#        Reminder: With sudo, `~` points to `/root`, not the current user's home.
 #
 # Global Env:
 #   * ROOT : The absolute path of scripts directory.
@@ -82,6 +86,7 @@ REMOTE_BACKUP_FILE='~/tmp/example-patch-remote.txt.bak'
 # ================================================================== Optional Configurations
 SILENT=false
 USE_RSYNC=false
+USE_SUDO=false
 
 # ================================================================== Functions
 source "$ROOT/AAA/common/functions.sh"

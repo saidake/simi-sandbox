@@ -1,4 +1,5 @@
 #!/bin/bash
+# ************************************************************************************
 # Copyright 2012-2025 the original author or authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,36 +14,40 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ************************************************************************************
-# This script executes a local bash file on the remote server without copying it.
-# The first parameter of this Bash script is a local Bash file, which will be
-# executed directly on the remote server. The working path defaults to the user home.
-#
-# Note: This script uses your provided credentials to switch to the **root** user in order to
-# execute commands with **sudo** privileges.
+# This script executes a local bash file on the remote server.
 #
 # Prerequisites:
 #   1. `sshpass` is installed locally.
-#   2. Configure variables in `scripts/AAA/config/server.sh`:
+#   2. Make sure the current bash file has execution privileges: `chmod +x scripts/execr.sh`
+#   3. Configure variables in `scripts/AAA/config/server.sh`:
 #        - REMOTE_HOST
 #        - REMOTE_USER
 #        - REMOTE_SSH_PORT (default: 22)
 #        - REMOTE_PWD
 #
 # Examples (run directly for easy start, using default settings):
-#   * ./scripts/execr.sh ./scripts/AAA/assets/example-bash.sh
+#   * `./scripts/execr.sh ./scripts/AAA/assets/example-bash.sh`
 #
 #      Execute the bash file `./scripts/AAA/assets/example-bash.sh` on your remote server.
 #
 # Usage:
-#   * ./scripts/exec.sh <local-bash-file-path>
+#   * `./scripts/exec.sh <local-bash-file-path>`
+# 
+#     The first parameter `<local-bash-file-path>` is a local Bash file, which will be
+#     executed directly on the remote server.
 #
 # Script Options (variables in this script):
 #   * USE_RSYNC    : (true/false) Use 'rsync' for uploading instead of 'scp'.
+#   * USE_SUDO     : (true/false) If true, the bash script will be executed with sudo privileges on the remote machine.
 #
+#       In sudo mode, the script is first copied to the remote server before execution.  
+#       In non-sudo mode, it is executed directly on the remote server via SSH.  
+#       Reminder: With sudo, `~` points to `/root`, not the current user's home.
 #   * SILENT       : (true/false) If true, disables all confirmation prompts (auto-approve).
 #   * LOCAL_BASH_FILE       : Local bash file to execute
 #   * REMOTE_TMP_BASH_FILE  : The local bash script will be uploaded to this path on the remote server.
-
+#   * REMOTE_WORK_PATH      : The working directory on the remote server where the script will be executed.
+#                            
 # Global Env:
 #   * ROOT : The absolute path of scripts directory.
 #
@@ -58,8 +63,9 @@ source "$ROOT/AAA/config/server.sh"
 
 # ================================================================== Default Configurations
 LOCAL_BASH_FILE="$1"     # Local bash file to execute
-REMOTE_TMP_BASH_FILE="/tmp/execr-remote-execution.sh"  # The local bash script will be uploaded to this path on the remote server
+REMOTE_WORK_PATH="~"
 
+USE_SUDO=true
 SILENT=false
 USE_RSYNC=false
 # ================================================================== Validate Input
@@ -80,7 +86,6 @@ if [[ ! -f "$LOCAL_BASH_FILE" ]]; then
 fi
 
 # ================================================================== Execute Remotely
-echo "[INFO] Executing '$LOCAL_BASH_FILE' on remote host $REMOTE_USER@$REMOTE_HOST..."
 
 # Use sshpass to pass the password
 #remote_execute "cd $REMOTE_WORK_PATH && bash -l -c 'bash -s'" < "$LOCAL_BASH_FILE"
@@ -93,6 +98,7 @@ echo "[INFO] Executing '$LOCAL_BASH_FILE' on remote host $REMOTE_USER@$REMOTE_HO
 #pwd
 #EOF
 #remote_execute "cd $REMOTE_WORK_PATH && echo \"$REMOTE_PWD\" | sudo -S bash -l -s" < "$LOCAL_BASH_FILE"
-upload_file_to_file "$LOCAL_BASH_FILE" "$REMOTE_TMP_BASH_FILE" $USE_RSYNC $SILENT
+# upload_file_to_file "$LOCAL_BASH_FILE" "$REMOTE_TMP_BASH_FILE" $USE_RSYNC $SILENT
 #remote_execute "echo \"$REMOTE_PWD\" | sudo -S bash $REMOTE_TMP_BASH_FILE && rm -f $REMOTE_TMP_BASH_FILE"
-remote_execute "echo \"$REMOTE_PWD\" | sudo -S bash -c 'echo; echo \"[INFO] Remote execution output: \"; bash \"$REMOTE_TMP_BASH_FILE\"; rm -f \"$REMOTE_TMP_BASH_FILE\"'"
+# remote_execute "echo \"$REMOTE_PWD\" | sudo -S bash -c 'echo; echo \"[INFO] Remote execution output: \"; bash \"$REMOTE_TMP_BASH_FILE\"; rm -f \"$REMOTE_TMP_BASH_FILE\"'"
+remote_execute_local_script "$LOCAL_BASH_FILE" "$REMOTE_WORK_PATH" $USE_RSYNC $SILENT

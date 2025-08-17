@@ -1,4 +1,5 @@
 #!/bin/bash
+# ************************************************************************************
 # Copyright 2022-2025 the original author or authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,48 +14,44 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ************************************************************************************
-# This script automates uploading specific files or directories from `scripts/AAA/assets`
-# to a remote server.
-#
-# Only files or folders listed in `scripts/AAA/config/path-mapping.properties` will be transferred.
-# Server credentials are defined in `scripts/AAA/config/server.sh`, and each entry maps
-# to a target directory on the remote server.
-#
-# Overwrite operations prompt for confirmation to ensure safety, unless `SILENT=true` is set.
-#
-# Transfers use SCP or rsync securely, with optional overwrite of existing remote files/dirs.
+# Automates uploading files from `ASSETS_ROOT` to mapped remote paths, according to 
+# rules in `PROPERTIES_FILE`.
 #
 # Prerequisites:
 #   1. `sshpass` is installed locally.
-#   2. Configure server variables in `scripts/AAA/config/server.sh`:
+#   2. Make sure the current bash file has execution privileges: `chmod +x scripts/cpfiles.sh`
+#   3. Configure server variables in `scripts/AAA/config/server.sh`:
 #        - REMOTE_HOST
 #        - REMOTE_USER
 #        - REMOTE_SSH_PORT (default: 22)
 #        - REMOTE_PWD
 #
 # Examples (run directly for easy start, using default settings):
-#   * ./scripts/cpfiles.sh
+#   * `./scripts/cpfiles.sh`
 #
 #       Copies `example1.txt` to the remote directory `~/examples`,
-#       and copies `example2.txt` and `example3.txt` from `scripts/AAA/assets/exampledir` to the remote directory
-#       `~/examples/targetdir` on the test server.
-#   * ./scripts/cpfiles.sh ./scripts/AAA/assets/example-env.sh
+#       and copies `example2.txt` and `example3.txt` from `scripts/AAA/assets/exampledir` 
+#       to the remote directory `~/examples/targetdir` on the test server.
+#   * `./scripts/cpfiles.sh ./scripts/AAA/assets/example-env.sh`
 #
-#       Use the specified env configuration to copy `example2.txt` and `example3.txt` from `scripts/AAA/assets/exampledir` to the remote directory
+#       Use the specified env configuration to copy `example2.txt` and `example3.txt` 
+#       from `scripts/AAA/assets/exampledir` to the remote directory
 #       `~/examples/targetdir2` on the test server.
 #
 # Usage:
-#   * ./scripts/cpfiles.sh [<env.sh>]
+#   * `./scripts/cpfiles.sh [<env.sh>]`
 #
 #      You can define script options in a specified `env.sh` to override the default options in this script.
 #
 # Script Options (variables in this script):
 #   * USE_RSYNC    : (true/false) Use `rsync` for uploading instead of `scp`.
-#
+#   * USE_SUDO     : (true/false) If true, these commands will be executed with sudo privileges on the remote machine.  
+#        Reminder: With sudo, `~` points to `/root`, not the current user's home.
 #   * SILENT       : (true/false) If true, disables all overwrite confirmation prompts (auto-approve).
 #   * PROPERTIES_FILE   : Copies the folder contents or files corresponding to the keys in the properties file
 #       to the remote directories specified by the values.
 #   * ASSETS_ROOT       : The base directory where the relative paths (keys) from PROPERTIES_FILE are located.
+# 
 #
 # Global Environment Variables:
 #   * ROOT : The absolute path of the scripts directory.
@@ -69,6 +66,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/AAA/config/global.sh"
 # Import global environment variables
 source "$ROOT/AAA/config/server.sh"
 # ================================================================== Default Configurations
+USE_SUDO=false
 # Use 'rsync' instead of 'scp'
 USE_RSYNC=false
 # Ask warning messages

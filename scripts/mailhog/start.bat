@@ -1,5 +1,5 @@
 @echo off
-REM ******************************************************************************
+REM ************************************************************************************
 REM Copyright 2022-2025 the original author or authors.
 REM
 REM Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,14 +13,17 @@ REM distributed under the License is distributed on an "AS IS" BASIS,
 REM WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 REM See the License for the specific language governing permissions and
 REM limitations under the License.
+REM ************************************************************************************
+REM Install and run the MailHog Docker image.
 REM
+REM Prerequisites:
+REM   1. **Docker Desktop** is installed and running locally. 
+REM      (see [Docker Desktop / Installing on Local Windows](#installing-on-local-windows)).
+REM 
 REM Author: Craig Brown
 REM Since: 1.3.3
 REM Date: August 5, 2025
-REM ******************************************************************************
-REM Prerequisites:
-REM    1. **Docker Desktop** is installed and running locally.
-REM ******************************************************************************
+REM ************************************************************************************
 
 echo Checking Docker...
 docker --version >nul 2>&1

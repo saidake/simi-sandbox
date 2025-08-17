@@ -99,7 +99,6 @@ trust_host() {
 }
 
 
-
 # Choice function to interact with the user
 ask() {
   local silent="$1"
@@ -126,8 +125,49 @@ ask() {
 }
 
 remote_execute() {
-  sshpass -p "$REMOTE_PWD" ssh -q -p "$REMOTE_SSH_PORT" "$REMOTE_USER@$REMOTE_HOST" "$1"
+  # sshpass -p "$REMOTE_PWD" ssh -q -p "$REMOTE_SSH_PORT" "$REMOTE_USER@$REMOTE_HOST" "$1"
+  local REMOTE_CMD="$1"
+  export SSHPASS="$REMOTE_PWD"
+  printf -v ESCAPED_CMD "%q" "$REMOTE_CMD"  
+  if [[ "$USE_SUDO" == true ]]; then
+    sshpass -e ssh -p "$REMOTE_SSH_PORT" "$REMOTE_USER@$REMOTE_HOST" \
+      "echo '$REMOTE_PWD' | sudo -S -p '' bash -c $ESCAPED_CMD"
+  else
+    sshpass -e ssh -p "$REMOTE_SSH_PORT" "$REMOTE_USER@$REMOTE_HOST" \
+      "bash -c $ESCAPED_CMD"
+  fi
 }
+
+remote_execute_local_script() {
+  local local_script_path="$1"
+  local remote_work_path="${2:-~}"
+  local use_rsync="${3:-false}"
+  local silent="${4:-false}"
+
+  if [[ ! -f "$local_script_path" ]]; then
+    echo "[ERROR] Script '$local_script_path' does not exist."
+    return 1
+  fi
+
+  local rand_suffix
+  rand_suffix=$(date +%s%N | sha256sum | head -c 8)
+  local remote_temp_bash_file="$SANDBOX_TEMP_DIR/temp_exec_${rand_suffix}.sh"
+
+  export SSHPASS="$REMOTE_PWD"
+
+  if [[ "$USE_SUDO" == true ]]; then
+    echo "[INFO] Uploading script to '$remote_temp_bash_file' for sudo execution..."
+    upload_file_to_file "$local_script_path" "$remote_temp_bash_file" "$use_rsync" "$silent"
+    echo "[INFO] Executing script with sudo..."
+    remote_execute "cd $remote_work_path && bash $remote_temp_bash_file"
+    remote_execute "rm -f '$remote_temp_bash_file'"
+  else
+    # echo "[INFO] Executing script directly without sudo..."
+    sshpass -e ssh -p "$REMOTE_SSH_PORT" "$REMOTE_USER@$REMOTE_HOST" \
+      "cd $remote_work_path && bash -l -s" < "$local_script_path"
+  fi
+}
+
 
 check_sshpass_installed() {
   if ! command -v sshpass >/dev/null 2>&1; then
@@ -142,9 +182,21 @@ resolve_remote_path() {
 }
 
 remote_dir_exists() {
-  remote_execute "[ -d \"$1\" ]"
+  remote_execute "[ -d '$1' ]"
 }
 
 remote_file_exists() {
-  remote_execute "[ -f \"$1\" ]"
+  remote_execute "[ -f '$1' ]"
+}
+
+remote_file_or_dir_exists() {
+  local filepath="$1"
+  # echo "[DEBUG] remote_file_or_dir_exists - filepath: $filepath" | cat -A
+  if remote_execute "test -e '$filepath'"; then
+    # echo "[DEBUG] remote_file_or_dir_exists - Exists"
+    return 0  # Exists
+  else
+    # echo "[DEBUG] remote_file_or_dir_exists - Not Exists"
+    return 1  # Not exists
+  fi
 }

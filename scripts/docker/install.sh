@@ -1,5 +1,5 @@
 #!/bin/bash
-#
+# ************************************************************************************
 # Copyright 2022-2025 the original author or authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,24 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# ************************************************************************************
+# Run this command in the current project directory to install Docker and Docker Compose.
 #
+# Example Success Output:
+# 
+#    ...
+#    [INFO] Docker installed successfully: Docker version 28.3.2, build 578ccf6
+#    ...
+#    [INFO] Docker Compose installed successfully: Docker Compose version v2.38.2
+#    [INFO] Installation complete.
+#
+# Prerequisites:
+#    1. Configure variables in `scripts/AAA/config/server.sh`:
+#         - REMOTE_HOST
+#         - REMOTE_USER
+#         - REMOTE_SSH_PORT (default: 22)
+#         - REMOTE_PWD
+# 
 # Author: Craig Brown
 # Since: 1.3.1
 # Date: July 20, 2025

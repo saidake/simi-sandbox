@@ -1,5 +1,5 @@
 @echo off
-REM ******************************************************************************
+REM ************************************************************************************
 REM Copyright 2022-2025 the original author or authors.
 REM
 REM Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,11 +13,16 @@ REM distributed under the License is distributed on an "AS IS" BASIS,
 REM WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 REM See the License for the specific language governing permissions and
 REM limitations under the License.
+REM ************************************************************************************
+REM Install Docker Desktop locally on your Windows machine.
 REM
+REM Prerequisites:
+REM   1. Open the Command Prompt with administrator privileges and navigate to the project root directory.
+REM 
 REM Author: Craig Brown
 REM Since: 1.3.3
 REM Date: August 5, 2025
-REM ******************************************************************************
+REM ************************************************************************************
 
 @echo off
 setlocal
