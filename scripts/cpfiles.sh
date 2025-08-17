@@ -45,7 +45,8 @@
 #
 # Script Options (variables in this script):
 #   * USE_RSYNC    : (true/false) Use `rsync` for uploading instead of `scp`.
-#   * USE_SUDO     : (true/false) If true, these commands will be executed with sudo privileges on the remote machine.
+#   * USE_SUDO     : (true/false) If true, these commands will be executed with sudo privileges on the remote machine.  
+#        Reminder: With sudo, `~` points to `/root`, not the current user's home.
 #   * SILENT       : (true/false) If true, disables all overwrite confirmation prompts (auto-approve).
 #   * PROPERTIES_FILE   : Copies the folder contents or files corresponding to the keys in the properties file
 #       to the remote directories specified by the values.

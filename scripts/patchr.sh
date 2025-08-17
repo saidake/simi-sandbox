@@ -60,8 +60,9 @@
 
 #   * USE_RSYNC          : (true/false) If true, use 'rsync' for uploading; otherwise use 'scp'.
 #   * SILENT             : (true/false) If true, suppresses all confirmation prompts (auto-approve).
-#   * USE_SUDO           : (true/false) If true, these commands will be executed with sudo privileges on the remote machine.
-# 
+#   * USE_SUDO           : (true/false) If true, these commands will be executed with sudo privileges on the remote machine.  
+#        Reminder: With sudo, `~` points to `/root`, not the current user's home.
+#
 # Global Env:
 #   * ROOT : The absolute path of scripts directory.
 #

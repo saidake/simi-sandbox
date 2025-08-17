@@ -59,7 +59,8 @@ Usage:
 
 Script Options (variables in this script):
   * USE_RSYNC    : (true/false) Use `rsync` for uploading instead of `scp`.
-  * USE_SUDO     : (true/false) If true, these commands will be executed with sudo privileges on the remote machine.
+  * USE_SUDO     : (true/false) If true, these commands will be executed with sudo privileges on the remote machine.  
+       Reminder: With sudo, `~` points to `/root`, not the current user's home.
   * SILENT       : (true/false) If true, disables all overwrite confirmation prompts (auto-approve).
   * PROPERTIES_FILE   : Copies the folder contents or files corresponding to the keys in the properties file
       to the remote directories specified by the values.
@@ -99,7 +100,8 @@ Script Options (variables in this script):
   * USE_SUDO     : (true/false) If true, the bash script will be executed with sudo privileges on the remote machine.
 
       In sudo mode, the script is first copied to the remote server before execution.  
-      In non-sudo mode, it is executed directly on the remote server via SSH.
+      In non-sudo mode, it is executed directly on the remote server via SSH.  
+      Reminder: With sudo, `~` points to `/root`, not the current user's home.
   * SILENT       : (true/false) If true, disables all confirmation prompts (auto-approve).
   * LOCAL_BASH_FILE       : Local bash file to execute
   * REMOTE_TMP_BASH_FILE  : The local bash script will be uploaded to this path on the remote server.
@@ -157,7 +159,8 @@ Script Options (variables inside this script):
 
   * USE_RSYNC          : (true/false) If true, use 'rsync' for uploading; otherwise use 'scp'.
   * SILENT             : (true/false) If true, suppresses all confirmation prompts (auto-approve).
-  * USE_SUDO           : (true/false) If true, these commands will be executed with sudo privileges on the remote machine.
+  * USE_SUDO           : (true/false) If true, these commands will be executed with sudo privileges on the remote machine.  
+       Reminder: With sudo, `~` points to `/root`, not the current user's home.
 
 Global Env:
   * ROOT : The absolute path of scripts directory.
